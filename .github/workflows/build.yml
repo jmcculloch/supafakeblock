@@ -30,7 +30,7 @@ jobs:
     # TODO: add back in when there are tests
     # - run: npm test
 
-release:
+  release:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # adjust branch name as needed
