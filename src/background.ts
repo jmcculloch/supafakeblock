@@ -75,6 +75,8 @@ export class Supabase {
         return false;
     }
 
+    // TODO: This requires public/anon write access to the scammers table, which is not ideal. Need to replace
+    // with a proper reporting/review mechanism, authentication, etc.
     public report(profileId: number,
         type: ScammerType = ScammerType.SCAMMER,
         confidence: number = 0.5): void {
