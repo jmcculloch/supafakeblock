@@ -23,13 +23,21 @@ At the moment this plugin must be installed manually, as an "unpacked extension"
     * Click `Load unpacked` button
     * Navigate to the directory with the downloaded extension source and click the `Select` button.
 
+You should close and reopen any Facebook tabs.
+
 ## Updates
 * Download new extension source code to the same directory you initially installed the extension.
 * Find the extension in [chrome://extensions](chrome://extensions) and click the `↻` button.
 
+You should close and reopen any Facebook tabs.
+
 ## Disable extension
 The extension can be disabled by finding the extension in [chrome://extensions](chrome://extensions) and toggling the switch in the bottom right hand corner.
+
+You should close and reopen any Facebook tabs.
 
 ## Remove extension
 The extension can be disabled by finding the extension in [chrome://extensions](chrome://extensions) and clicking the `Remove` button.
 `TODO: This may leave copies of the blacklist. Describe how to remove`
+
+You should close and reopen any Facebook tabs.
