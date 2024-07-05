@@ -3,6 +3,7 @@ import { Supabase } from './background';
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+
 (async function () {
     'use strict';
 
@@ -55,6 +56,7 @@ import { createRoot } from "react-dom/client";
     class ReportLink extends React.Component<{ profileId: number, profileName: string, profileLink: HTMLAnchorElement }> {
         handleClick(e: React.MouseEvent<HTMLElement>) {
             e.stopPropagation();
+            e.preventDefault();
     
             if (confirm(`Are you sure you want to report ${this.props.profileName} (${this.props.profileId}) as a scammer?`)) {
                 supabase.report(this.props.profileId);
@@ -68,7 +70,7 @@ import { createRoot } from "react-dom/client";
     
         render() {
             return (
-                <span><a href="#" onClick={this.handleClick.bind(this)}>🚨</a></span>
+                <span onClick={this.handleClick.bind(this)}>🚨</span>
             );
         }
     };
