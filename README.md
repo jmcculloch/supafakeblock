@@ -20,6 +20,7 @@ At the moment this plugin must be installed manually, as an "unpacked extension"
 
 * Build or download the plugin source code. `TODO: link to build artifacts`
 * Open [chrome://extensions](chrome://extensions)
+    * Toggle the `Developer mode` switch in the upper right hand corner. (Does Developer)
     * Click `Load unpacked` button
     * Navigate to the directory with the downloaded extension source and click the `Select` button.
 
