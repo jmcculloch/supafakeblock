@@ -64,7 +64,6 @@ import { createRoot } from "react-dom/client";
                 // TODO: there may be multiple matching links but only the clicked link will be re-evaluated
                 this.props.profileLink.removeAttribute('evaluatedForScammer');
                 updateGroupProfileLinks();
-                alert(`Reported ${this.props.profileName}`);
             }
         }
     
