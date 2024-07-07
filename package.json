@@ -1,7 +1,7 @@
 {
-  "name": "chrome-extension-typescript-starter",
-  "version": "0.0.1",
-  "description": "chrome-extension-typescript-starter",
+  "name": "supafakeblock",
+  "version": "0.0.2",
+  "description": "Distributed Blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chibat/chrome-extension-typescript-starter.git"
+    "url": "https://github.com/jmcculloch/supafakeblock.git"
   },
   "dependencies": {
     "react": "^18.2.0",
