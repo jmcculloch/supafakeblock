@@ -32,10 +32,6 @@
     "service_worker": "js/background.js"
   },
 
-  "permissions": [
-    "storage"
-  ],
-
   "host_permissions": [
     "<all_urls>"
   ]
