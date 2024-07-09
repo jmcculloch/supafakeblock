@@ -1,14 +1,15 @@
 {
   "name": "supafakeblock",
   "version": "0.0.3",
-  "description": "Distributed Blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
+  "description": "Distributed blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
     "build": "webpack --config webpack/webpack.prod.js",
     "clean": "rimraf dist",
     "test": "npx jest",
-    "style": "prettier --write \"src/**/*.{ts,tsx}\""
+    "style": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "package": "cd dist ; zip -r supafakeblock.zip ."
   },
   "author": "",
   "license": "MIT",
