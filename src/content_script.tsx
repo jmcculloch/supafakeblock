@@ -16,10 +16,14 @@ import { createRoot } from "react-dom/client";
     // TODO: tweaks to Options to perform better?
     observer.observe(document.body, { attributes: true, childList: true, subtree: true });
 
-    function updateGroupProfileLinks(): void {
+    function queryGroupProfileLinks(func: (e: Element) => void) {
         // TODO: better query selector to not evaluate the entire DOM/MutationObserver node? assume
         // CSS classes etc are volatile
-        document.querySelectorAll('a[href^="/groups/"][href*="/user/"]').forEach(async function (e: Element) {
+        document.querySelectorAll('a[href^="/groups/"][href*="/user/"]').forEach(func);
+    }
+
+    function updateGroupProfileLinks(): void {
+        queryGroupProfileLinks(async (e: Element) => {
             const profileLink = e as HTMLAnchorElement;
             // NOTE: hack to prevent infinite MutationObserver loops when manipulating links
             if (!profileLink.hasAttribute('evaluatedForScammer')) {
@@ -38,6 +42,7 @@ import { createRoot } from "react-dom/client";
                     }
                 }
             }
+
         });
     }
 
