@@ -2,7 +2,7 @@
   "manifest_version": 3,
 
   "name": "Supafakeblock",
-  "description": "Distributed Blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
+  "description": "Distributed blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
   "version": "0.0.3",
 
   "options_ui": {
