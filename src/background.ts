@@ -2,7 +2,7 @@ require('rxdb-supabase');
 
 import { createRxDatabase, RxJsonSchema } from "rxdb"
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
 import { ScammerType } from './types';
@@ -27,29 +27,31 @@ const SCHEMA: RxJsonSchema<any> = {
 };
 
 export class Supabase {
-    private supabaseClient: SupabaseClient;
     private myCollection: any;
-
-    private constructor() {
-        this.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
+    private static instance : Supabase;
 
     public static async init(): Promise<Supabase> {
-        const supabase = new Supabase();
+        if(this.instance != null) {
+            return this.instance;
+        }
+
+        this.instance = new Supabase();
         const db = await createRxDatabase({
             name: 'scammers',
             storage: getRxStorageDexie()
         });
 
-        supabase.myCollection = await db.addCollections({
+        this.instance.myCollection = await db.addCollections({
             scammers: {
                 schema: SCHEMA
             }
         });
 
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const replication = new SupabaseReplication({
-            supabaseClient: supabase.supabaseClient,
-            collection: supabase.myCollection.scammers,
+            supabaseClient: supabaseClient,
+            collection: this.instance.myCollection.scammers,
             replicationIdentifier: "myId" + SUPABASE_URL,
             pull: {
                 realtimePostgresChanges: true
@@ -58,7 +60,7 @@ export class Supabase {
             autoStart: true,
         });
 
-        return supabase;
+        return this.instance;
     }
 
     public async isScammer(profileId: number): Promise<boolean> {
@@ -85,3 +87,5 @@ export class Supabase {
         });
     }
 }
+
+Supabase.init();
