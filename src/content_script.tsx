@@ -1,4 +1,4 @@
-import { Supabase } from './background';
+import { Supabase } from './supabase';
 
 import React from "react";
 import { createRoot } from "react-dom/client";
