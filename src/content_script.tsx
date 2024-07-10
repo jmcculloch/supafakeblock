@@ -1,20 +1,16 @@
 import { Supabase } from './supabase';
 
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-
 (async function () {
     'use strict';
 
+    // TODO: make sure there is a single instance of this
     const supabase: Supabase = await Supabase.init();
 
     updateGroupProfileLinks();
 
     const observer = new MutationObserver((mutationList, observer) => updateGroupProfileLinks());
     // TODO: is there a more precise node to monitor Facebook/React? DOM manipulation?
-    // TODO: tweaks to Options to perform better?
-    observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+    observer.observe(document.body, { attributes: false, childList: true, subtree: true });
 
     function queryGroupProfileLinks(func: (e: Element) => void) {
         // TODO: better query selector to not evaluate the entire DOM/MutationObserver node? assume
@@ -35,11 +31,6 @@ import { createRoot } from "react-dom/client";
                     if (await supabase.isScammer(profileId)) {
                         profileLink.style.background = '#ff0000';
                     }
-                    else {
-                        // TODO: react already included in project template but could use a simpler template engine?
-                        const root = createRoot(profileLink.appendChild(document.createElement("span")));
-                        root.render(<ReportLink profileName={profileLink.textContent!} profileId={profileId} profileLink={profileLink}/>);
-                    }
                 }
             }
 
@@ -57,25 +48,4 @@ import { createRoot } from "react-dom/client";
             return Number.NaN;
         }
     }
-
-    class ReportLink extends React.Component<{ profileId: number, profileName: string, profileLink: HTMLAnchorElement }> {
-        handleClick(e: React.MouseEvent<HTMLElement>) {
-            e.stopPropagation();
-            e.preventDefault();
-    
-            if (confirm(`Are you sure you want to report ${this.props.profileName} (${this.props.profileId}) as a scammer?`)) {
-                supabase.report(this.props.profileId);
-    
-                // TODO: there may be multiple matching links but only the clicked link will be re-evaluated
-                this.props.profileLink.removeAttribute('evaluatedForScammer');
-                updateGroupProfileLinks();
-            }
-        }
-    
-        render() {
-            return (
-                <span onClick={this.handleClick.bind(this)}>🚨</span>
-            );
-        }
-    };
 })();

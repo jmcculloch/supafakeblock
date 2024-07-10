@@ -87,5 +87,3 @@ export class Supabase {
         });
     }
 }
-
-Supabase.init();
