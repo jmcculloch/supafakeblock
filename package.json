@@ -9,7 +9,7 @@
     "clean": "rimraf dist",
     "test": "npx jest",
     "style": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "package": "cd dist ; zip -r supafakeblock.zip ."
+    "package": "export V=`jq -r < public/manifest.json .version` ; cd dist ; zip -r supafakeblock-$V.zip ."
   },
   "author": "",
   "license": "MIT",
