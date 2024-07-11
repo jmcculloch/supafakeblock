@@ -5,8 +5,8 @@ export enum ScammerType {
 };
 
 export interface Scammer {
-    id: number,
-    type: ScammerType,
-    notes: string | undefined,
-    confidence: number,
+    profileId: number,
+    type?: ScammerType,
+    notes?: string | undefined,
+    confidence?: number,
 };
