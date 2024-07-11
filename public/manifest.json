@@ -29,10 +29,17 @@
   ],
 
   "background": {
-    "service_worker": "js/background.js"
+    "service_worker": "js/background.js",
+    "scripts": ["js/background.js"]
   },
 
   "permissions": [
     "contextMenus"
-  ]
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "supafakeblock@jmcculloch"
+    }
+  }
 }
