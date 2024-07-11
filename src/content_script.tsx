@@ -15,25 +15,11 @@ observer.observe(document.body, { attributes: false, childList: true, subtree: t
  * Search DOM for <a href="/groups/{groupId}/user/{profileId}"> elements.
  * 
  * @param callback invokes callback on matching elements
+ * @param profileId optional parameter to limit to a specific profileId
  */
-function queryGroupProfileLinks(callback: (e: Element) => void) {
+function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number) {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
-    document.querySelectorAll('a[href^="/groups/"][href*="/user/"]').forEach(callback);
-}
-
-function queryGroupProfileLinksForSpecificId(profileId: number, callback: (e: Element) => void) {
-    // TODO: possible to refactor to include the profileId in the querySelector, e.g. `[href*="/user/${profileId}"]`
-    // rather than evaluating below
-    document.querySelectorAll('a[href^="/groups/"][href*="/user/"]').forEach(function(e: Element) {
-        const profileLink = e as HTMLAnchorElement;
-
-        if(e.textContent !== '') {
-            const elementProfileId: number = profileIdFromGroupProfileUrl(profileLink.href);
-            if(elementProfileId == profileId) {
-                callback(e);
-            }
-        }
-    });
+    document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]`).forEach(callback);
 }
 
 /**
@@ -79,11 +65,11 @@ function markEvaluated(profileLink: HTMLAnchorElement) {
      */
     chrome.runtime.onMessage.addListener(function (request: Scammer, sender: chrome.runtime.MessageSender, sendResponse?: any) {
         console.log(`content script Received message: `, request, sender, sendResponse);
-        queryGroupProfileLinksForSpecificId(request.profileId, function(e: Element) {
+        queryGroupProfileLinks(function(e: Element) {
             // TODO: is there a cleaner way to cast this?
             const profileLink = e as HTMLAnchorElement;
             markAsScammer(profileLink);
             markEvaluated(profileLink);
-        })
+        }, request.profileId);
     });
 })();
