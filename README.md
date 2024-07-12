@@ -11,34 +11,47 @@ The browser extension will montitor Facebook group content and highlights blackl
 * Group admin activities, e.g. participation requests
 * Any group content in your personal feed
 
-Unknown group profile links will have an icon to report the profile to the distributed blacklist. The UI is rudementary and will change over time. If the report icons are too distracting the extension can be [disabled](#disable-extension).
+## Building
+### Requirements
+* `node`
+* `npm`
+* `make`
+* `jq` https://jqlang.github.io/jq/ (to parse manifest.json for version)
 
-Only Google Chrome is supported but Firefox, Safari, etc could be supported in the future. If there is enough interest I will give this some attention.
+This project is based on https://github.com/chibat/chrome-extension-typescript-starter but with some `Makefile` helpers:
+* `make` - builds project in `dev` mode into `dist/`
+* `make watch` - watches for changes and builds in real time
+* `make package` - builds project in `prod` mode and packages project into a versioned zipfile `dist/supafakeblock-VERSION.zip`
 
-## Installation
-At the moment this plugin must be installed manually, as an "unpacked extension". If this plugin gets enough usage it will be published on the [Chrome Web Store](https://chromewebstore.google.com/) and installed as any other extension.
+### Installation
+For more details, see the Wiki.
 
-* Build or download the plugin source code. `TODO: link to build artifacts`
-* Open [chrome://extensions](chrome://extensions)
-    * Toggle the `Developer mode` switch in the upper right hand corner. (Does Developer)
+ * `TODO: link to build artifacts`
+
+#### Chrome
+At the moment this plugin must be installed manually, as an "unpacked extension".
+
+If this plugin gets enough usage it will be published on the [Chrome Web Store](https://chromewebstore.google.com/) and installed as any other extension.
+
+* Build (`make`) or download a pre-built extension package
+    * If you downloaded a `.zip` file, it must first be extracted, e.g. `unzip supafakeblock-VERSION.zip -d /path/to/destination/folder`
+* Open `about:extensions`
+    * Toggle the `Developer mode` switch in the upper right hand corner
     * Click `Load unpacked` button
-    * Navigate to the directory with the downloaded extension source and click the `Select` button.
+    * Navigate to the directory with unzipped package from earlier step and click the `Select` button.
+* Close and reopen any Facebook tabs or they will be running a previous build.
 
-You should close and reopen any Facebook tabs.
+#### Firefox
+Firefox only allows "unsigned" extensions to be installed on a temporary basis. The extension will not be reloaded next time Firefox restarts 
 
-## Updates
-* Download new extension source code to the same directory you initially installed the extension.
-* Find the extension in [chrome://extensions](chrome://extensions) and click the `↻` button.
+If this plugin gets enough usage it will be published on the [Firefox Add Ons](https://addons.mozilla.org/) and installed as any other extension.
 
-You should close and reopen any Facebook tabs.
+* Build (`make package`) or download a pre-built extension package
+* Open `about:debugging#/runtime/this-firefox`
+    * Click the `Load Temporary Add-on...` button
+    * Select `supafakeblock-VERSION.zip` and click `Open`
 
-## Disable extension
-The extension can be disabled by finding the extension in [chrome://extensions](chrome://extensions) and toggling the switch in the bottom right hand corner.
+#### Safari
+With a local build? `¯\_(ツ)_/¯`
 
-You should close and reopen any Facebook tabs.
-
-## Remove extension
-The extension can be disabled by finding the extension in [chrome://extensions](chrome://extensions) and clicking the `Remove` button.
-`TODO: This may leave copies of the blacklist. Describe how to remove`
-
-You should close and reopen any Facebook tabs.
+If this plugin gets enough usage it will be published on the [Chrome Web Store](https://chromewebstore.google.com/) and installed as any other extension.

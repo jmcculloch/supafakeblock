@@ -8,3 +8,6 @@ clean:
 
 package: build
 	npm run package
+
+watch:
+	npm run watch
