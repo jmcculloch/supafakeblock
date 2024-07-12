@@ -29,22 +29,19 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     /**
      * 
      */
-    chrome.contextMenus.onClicked.addListener(async function(info: chrome.contextMenus.OnClickData) {
+    chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
         const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
-
-        // Get the current active tab that the context menu was activated on
-        // TODO: Is this available in the OnClickedData?
-        // NOTE: [tab] destructuring
-        const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
 
         // Report profile to the server
         // TODO: In the future this should involve a dialog that collections additional information such as profile type, confidence, etc.
         supabase.report(profileId);
 
         // Send a message back to the content script/DOM to actively flag the profile
-        chrome.tabs.sendMessage(tab.id!, {
-            profileId: profileId
-        });
+        if(tab && tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+                profileId: profileId
+            });
+        }
     });
 
     /**
