@@ -1,9 +1,18 @@
-import { profileIdFromGroupProfileUrl } from './common';
-import { Scammer } from './types';
+import { queryGroupProfileLinks, updateGroupProfileLinks, markAsScammer, markEvaluated } from './common';
+import React, { useState } from 'react'
+import { MantineProvider, createTheme } from '@mantine/core';
+import { createRoot } from "react-dom/client";
+import { Modal, Button, Text, SegmentedControl, Slider, Textarea, Stack } from '@mantine/core';
+
+import '@mantine/core/styles.css';
+import { Command, Message, PromptRequest, ScammerType } from './types';
+import { useInputState } from '@mantine/hooks';
 
 'use strict';
 
-const EVALUATED_FOR_SCAMMER = 'evaluatedForScammer';
+const theme = createTheme({
+/** Put your mantine theme override here */
+});
 
 updateGroupProfileLinks();
 
@@ -11,65 +20,108 @@ const observer = new MutationObserver((mutationList, observer) => updateGroupPro
 // TODO: is there a more precise node to monitor Facebook/React? DOM manipulation?
 observer.observe(document.body, { attributes: false, childList: true, subtree: true });
 
-/**
- * Search DOM for <a href="/groups/{groupId}/user/{profileId}"> elements.
- * 
- * @param callback invokes callback on matching elements
- * @param profileId optional parameter to limit to a specific profileId
- */
-function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number) {
-    // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
-    document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]`).forEach(callback);
-}
+function App() {
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [profileId, setProfileId] = useState<number>();
+    const [notes, setNotes] = useInputState<string>('');
+    const [scammerType, setScammerType] = useInputState<string>('Scammer');
+    const [confidence, setConfidence] = useInputState<number>(0.5);
 
-/**
- * TODO: rename?
- * TODO: document
- */
-function updateGroupProfileLinks(): void {
-    queryGroupProfileLinks(async (e: Element) => {
-        const profileLink = e as HTMLAnchorElement;
-        // NOTE: hack to prevent infinite MutationObserver loops when manipulating links
-        if (isEvaluated(profileLink)) {
-            markEvaluated(profileLink);
+    /**
+     * Register a message listener from the background service -> this context menu handler.
+     */
+    chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
+        // TODO: remove console log
+        console.log(`content script received message: `, request, sender, sendResponse);
 
-            if(e.textContent !== '') {
-                const profileId: number = profileIdFromGroupProfileUrl(profileLink.href);
-
-                chrome.runtime.sendMessage({ profileId: profileId }, function(response) {
-                    if(response.isScammer) {
-                        markAsScammer(profileLink);
-                    }
-                });
-            }
+        switch(request.command) {
+            case Command.Prompt:
+                showPrompt((request.body as PromptRequest).profileId);
+                break;
+            default:
+                console.log(`Received unknown command: `, request.command);
         }
     });
-}
 
-function markAsScammer(profileLink: HTMLAnchorElement) {
-    profileLink.style.background = '#ff0000';
-}
+    function showPrompt(profileId: number) {
+        setProfileId(profileId);
+        setOpenModal(true);
+    }
 
-function isEvaluated(profileLink: HTMLAnchorElement) {
-    return !profileLink.hasAttribute(EVALUATED_FOR_SCAMMER);
-}
+    function report() {
+        // Submit report to background/supabase
+        chrome.runtime.sendMessage({
+            command: Command.Report,
+            body: {
+                profileId: profileId,
+                type: scammerType,
+                notes: notes,
+                confidence: confidence
+            }
+        });
 
-function markEvaluated(profileLink: HTMLAnchorElement) {
-    profileLink.setAttribute(EVALUATED_FOR_SCAMMER, 'true');
-}
+        // Update UI
+        updateProfile(profileId!);
 
-(async function () {
-    /**
-     * Register a message listener from the background service / context menu handler.
-     * Currently this is only to submit a profileId to search the DOM and invoke markAsScammer.
-     */
-    chrome.runtime.onMessage.addListener(function (request: Scammer, sender: chrome.runtime.MessageSender, sendResponse?: any) {
-        console.log(`content script Received message: `, request, sender, sendResponse);
+        setOpenModal(false);
+        // TODO: better way to clear state? leave scammerType as previously used
+        setConfidence(0.5);
+        setNotes('');
+        setProfileId(undefined);
+    }
+
+    function updateProfile(profileId: number) {
         queryGroupProfileLinks(function(e: Element) {
             // TODO: is there a cleaner way to cast this?
             const profileLink = e as HTMLAnchorElement;
+
+            console.log(`updateProfile: found ${profileId}`, profileLink);
+
             markAsScammer(profileLink);
             markEvaluated(profileLink);
-        }, request.profileId);
-    });
-})();
+        }, profileId);
+    }
+
+    return (
+        <>
+            <Modal opened={openModal} onClose={close} title="Report Profile" centered>
+                <Stack
+                    align="stretch"
+                    justify="center"
+                    gap="xs">
+                    <Text size="md" >Are you sure you want to report PROFILE_NAME ({profileId})?</Text>
+
+                    <SegmentedControl fullWidth size="md" radius="xl" data={[
+                            ScammerType.SCAMMER.toString(),
+                            ScammerType.SPAMMER.toString(),
+                            ScammerType.FAKE_PROFILE.toString()
+                        ]} value={scammerType} onChange={setScammerType}/>
+
+                    <Slider color="red" value={confidence} onChange={setConfidence} marks={[
+                        { value: 0, label: 'Not Sure' },
+                        { value: 50, label: 'Meh?' },
+                        { value: 100, label: 'Positive' },
+                    ]} />
+
+                    <Textarea
+                        placeholder="Optional: Enter contextual notes about this profile here."
+                        label="Notes"
+                        autosize
+                        minRows={4}
+                        value={notes} onChange={setNotes} />
+
+                    <Button onClick={report} color="red">Report Profile</Button>
+                </Stack>
+            </Modal>
+        </>
+    );
+}
+
+const root = createRoot(document.createElement('div'));
+root.render(
+  <React.StrictMode>
+    <MantineProvider theme={theme}>
+        <App/>
+    </MantineProvider>
+  </React.StrictMode>
+);

@@ -5,7 +5,7 @@ import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
 import { createClient } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
-import { ScammerType } from './types';
+import { Scammer, ScammerType } from './types';
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -63,27 +63,26 @@ export class Supabase {
         return this.instance;
     }
 
-    public async isScammer(profileId: number): Promise<boolean> {
-        if (this.myCollection) {
-            const result = await this.myCollection.scammers.findOne({
-                selector: {
-                    id: profileId
-                }
-            }).exec();
+    public async getScammer(profileId: number): Promise<Scammer | null> {
+        const result = await this.myCollection?.scammers.findOne({
+            selector: {
+                id: profileId
+            }
+        }).exec();
 
-            return result != null;
-        }
-
-        return false;
+        // TODO: finish this
+        return result ? {
+            profileId: result.id,
+            type: ScammerType.UNKNOWN,
+            confidence: 0.5,
+        }: null;
     }
 
     // TODO: This requires public/anon write access to the scammers table, which is not ideal. Need to replace
     // with a proper reporting/review mechanism, authentication, etc.
-    public report(profileId: number,
-        type: ScammerType = ScammerType.SCAMMER,
-        confidence: number = 0.5): void {
+    public report(scammer: Scammer): void {
         this.myCollection.scammers.insert({
-            id: profileId
+            id: scammer.profileId
         });
     }
 }

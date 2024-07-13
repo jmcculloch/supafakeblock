@@ -1,5 +1,6 @@
 import { Supabase } from './supabase';
 import { profileIdFromGroupProfileUrl } from './common';
+import { Command, Message, QueryRequest, ReportRequest } from './types';
 
 'use strict';
 
@@ -32,14 +33,13 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
         const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
 
-        // Report profile to the server
-        // TODO: In the future this should involve a dialog that collections additional information such as profile type, confidence, etc.
-        supabase.report(profileId);
-
         // Send a message back to the content script/DOM to actively flag the profile
         if(tab && tab.id) {
             chrome.tabs.sendMessage(tab.id, {
-                profileId: profileId
+                command: Command.Prompt,
+                body: {
+                    profileId: profileId
+                }
             });
         }
     });
@@ -47,14 +47,26 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     /**
      * 
      */
-    chrome.runtime.onMessage.addListener(function (request: any, sender: chrome.runtime.MessageSender, sendResponse?: any) {
-        // console.log(`Received message: `, request, sender, sendResponse);
-        (async () => {
-            const isScammer = await supabase.isScammer(request.profileId);
-            sendResponse({
-                isScammer: isScammer
-            });
-        })();
+    chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
+        console.log(`Received message: `, request, sender, sendResponse);
+        switch((request as Message).command) {
+            case Command.Report:
+                const report = (request.body as ReportRequest);
+
+                // Update database
+                supabase.report({
+                    profileId: report.profileId,
+                    type: report.type,
+                    confidence: report.confidence
+                });
+                break;
+            case Command.Query:
+                (async () => {
+                    sendResponse(await supabase.getScammer((request.body as QueryRequest).profileId));
+                })();
+                break;
+            default:
+        }
 
         // NOTE: We must return true in order to allow the asynchronous response above
         return true;
