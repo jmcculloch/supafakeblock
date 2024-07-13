@@ -6,7 +6,7 @@ import { Modal, Button, Text, SegmentedControl, Slider, Textarea, Stack } from '
 
 import '@mantine/core/styles.css';
 import { Command, Message, PromptRequest, ScammerType } from './types';
-import { useInputState } from '@mantine/hooks';
+import { useDisclosure, useInputState } from '@mantine/hooks';
 
 'use strict';
 
@@ -21,7 +21,7 @@ const observer = new MutationObserver((mutationList, observer) => updateGroupPro
 observer.observe(document.body, { attributes: false, childList: true, subtree: true });
 
 function App() {
-    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [opened, { close, open }] = useDisclosure(false);
     const [profileId, setProfileId] = useState<number>();
     const [notes, setNotes] = useInputState<string>('');
     const [scammerType, setScammerType] = useInputState<string>('Scammer');
@@ -36,16 +36,16 @@ function App() {
 
         switch(request.command) {
             case Command.Prompt:
-                showPrompt((request.body as PromptRequest).profileId);
+                showModal((request.body as PromptRequest).profileId);
                 break;
             default:
                 console.log(`Received unknown command: `, request.command);
         }
     });
 
-    function showPrompt(profileId: number) {
+    function showModal(profileId: number) {
         setProfileId(profileId);
-        setOpenModal(true);
+        open();
     }
 
     function report() {
@@ -63,7 +63,7 @@ function App() {
         // Update UI
         updateProfile(profileId!);
 
-        setOpenModal(false);
+        close();
         // TODO: better way to clear state? leave scammerType as previously used
         setConfidence(0.5);
         setNotes('');
@@ -84,7 +84,7 @@ function App() {
 
     return (
         <>
-            <Modal opened={openModal} onClose={close} title="Report Profile" centered>
+            <Modal opened={opened} onClose={close} title="Report Profile" centered>
                 <Stack
                     align="stretch"
                     justify="center"
