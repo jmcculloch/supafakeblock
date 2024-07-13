@@ -1,4 +1,4 @@
-// TODO: rename to "facebook.ts"
+// TODO: rename to "facebook.ts"?
 
 import { Command, Scammer } from "./types";
 
@@ -6,7 +6,6 @@ import { Command, Scammer } from "./types";
  *
  */
 const GROUP_PROFILE_LINK_REGEX = /.*\/groups\/\d+\/user\/(\d+)\//;
-const EVALUATED_FOR_SCAMMER = 'evaluatedForScammer';
 
 /**
  * Parses a Facebook group profile link and extracts the profile ID
@@ -33,11 +32,14 @@ function getFacebookUserId(): number | null{
  * Search DOM for <a href="/groups/{groupId}/user/{profileId}"> elements.
  *
  * @param callback invokes callback on matching elements
- * @param profileId optional parameter to limit to a specific profileId
+ * @param profileId optional parameter to limit to a specific profileId (will search pre-evaluated links)
  */
 export function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number) {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
-    document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]`).forEach(callback);
+    // TODO: document logic at this point
+    const matches = document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`);
+    console.log(`queryGroupProfileLinks profileId:${profileId}, count ${matches.length}`);
+    matches.forEach(callback);
 }
 
 /**
@@ -48,34 +50,24 @@ export function updateGroupProfileLinks(): void {
     queryGroupProfileLinks(async (e: Element) => {
         const profileLink = e as HTMLAnchorElement;
 
-        // NOTE: hack to prevent infinite MutationObserver loops when manipulating links
-        if (isEvaluated(profileLink)) {
-            markEvaluated(profileLink);
+        profileLink.classList.add('sfb_evaluated');
 
-            if(e.textContent !== '') {
-                const profileId: number = profileIdFromGroupProfileUrl(profileLink.href);
+        if(e.textContent !== '') {
+            const profileId: number = profileIdFromGroupProfileUrl(profileLink.href);
 
-                chrome.runtime.sendMessage({
-                        command: Command.Query,
-                        body: {
-                            profileId: profileId
-                        },
+            chrome.runtime.sendMessage({
+                    command: Command.Query,
+                    body: {
+                        profileId: profileId
                     },
-                    (scammer: Scammer) => { if(scammer) markAsScammer(profileLink) }
-                );
-            }
+                },
+                (scammer: Scammer) => { if(scammer) markAsScammer(profileLink) }
+            );
         }
     });
 }
 
 export function markAsScammer(profileLink: HTMLAnchorElement) {
-    profileLink.style.background = '#ff0000';
+    profileLink.classList.add('sfb_scammer');
 }
 
-function isEvaluated(profileLink: HTMLAnchorElement) {
-    return !profileLink.hasAttribute(EVALUATED_FOR_SCAMMER);
-}
-
-export function markEvaluated(profileLink: HTMLAnchorElement) {
-    profileLink.setAttribute(EVALUATED_FOR_SCAMMER, 'true');
-}

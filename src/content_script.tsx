@@ -1,4 +1,4 @@
-import { queryGroupProfileLinks, updateGroupProfileLinks, markAsScammer, markEvaluated } from './common';
+import { queryGroupProfileLinks, updateGroupProfileLinks, markAsScammer } from './common';
 import React, { useState } from 'react'
 import { MantineProvider, createTheme } from '@mantine/core';
 import { createRoot } from "react-dom/client";
@@ -45,6 +45,7 @@ function App() {
 
     function showModal(profileId: number) {
         setProfileId(profileId);
+        // TODO: lookup name from profileId->link?
         open();
     }
 
@@ -64,22 +65,14 @@ function App() {
         updateProfile(profileId!);
 
         close();
-        // TODO: better way to clear state? leave scammerType as previously used
+        // TODO: better way to clear state? leave scammerType as previously set
         setConfidence(0.5);
         setNotes('');
         setProfileId(undefined);
     }
 
     function updateProfile(profileId: number) {
-        queryGroupProfileLinks(function(e: Element) {
-            // TODO: is there a cleaner way to cast this?
-            const profileLink = e as HTMLAnchorElement;
-
-            console.log(`updateProfile: found ${profileId}`, profileLink);
-
-            markAsScammer(profileLink);
-            markEvaluated(profileLink);
-        }, profileId);
+        queryGroupProfileLinks((e) => markAsScammer(e as HTMLAnchorElement), profileId);
     }
 
     return (

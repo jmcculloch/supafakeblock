@@ -29,7 +29,8 @@
   "content_scripts": [
       {
           "matches": ["https://www.facebook.com/*"],
-          "js": ["js/vendor.js", "js/content_script.js"]
+          "js": ["js/vendor.js", "js/content_script.js"],
+          "css": ["supafakeblock.css"]
       }
   ],
 
