@@ -1,6 +1,6 @@
 import { Supabase } from './supabase';
 import { profileIdFromGroupProfileUrl } from './common';
-import { Command, Message, QueryRequest, ReportRequest } from './types';
+import { Command, Message } from './types';
 
 'use strict';
 
@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         id: 'test',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
-            'https://www.facebook.com/profile.php?id=*',
+            // 'https://www.facebook.com/profile.php?id=*',
             // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
         ],
     });
@@ -33,13 +33,11 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
         const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
 
-        // Send a message back to the content script/DOM to actively flag the profile
+        // Send a message back to the content script/DOM to prompt user for report data
         if(tab && tab.id) {
             chrome.tabs.sendMessage(tab.id, {
                 command: Command.Prompt,
-                body: {
-                    profileId: profileId
-                }
+                body: profileId
             });
         }
     });
@@ -48,21 +46,22 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
      * 
      */
     chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
-        console.log(`Received message: `, request, sender, sendResponse);
+        // TODO: remove
+        // console.log(`Received message: `, request, sender, sendResponse);
         switch((request as Message).command) {
             case Command.Report:
-                const report = (request.body as ReportRequest);
-
                 // Update database
-                supabase.report({
-                    profileId: report.profileId,
-                    type: report.type,
-                    confidence: report.confidence
-                });
+                // TODO: fix typing on structured Message request
+                supabase.report(request.body as any);
                 break;
-            case Command.Query:
+            case Command.IsBlacklisted:
                 (async () => {
-                    sendResponse(await supabase.getScammer((request.body as QueryRequest).profileId));
+                    sendResponse(await supabase.isBlacklisted(request.body as number));
+                })();
+                break;
+            case Command.GetReportStats:
+                (async () => {
+                    sendResponse(await supabase.getReportStats(request.body as number));
                 })();
                 break;
             default:

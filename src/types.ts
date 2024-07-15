@@ -1,39 +1,31 @@
-export enum ScammerType {
-    SCAMMER = 'Scammer',
-    SPAMMER = 'Spammer',
-    FAKE_PROFILE = 'Fake Profile',
-    UNKNOWN = 'Unknown'
+export enum ReportType {
+    SCAMMER = 'SCAMMER',
+    SPAMMER = 'SPAMMER',
+    FAKE_PROFILE = 'FAKE_PROFILE',
 }
 
-export interface Scammer {
+export interface Report {
     profileId: number,
     type: string,
     confidence: number,
-    notes?: string | undefined
+    notes?: string,
+    reporter?: number
+}
+
+export interface ReportStats {
+    upVotes: number,
+    downVotes: number,
+    avgConfidence: number
 }
 
 export enum Command {
-    Prompt,
-    Report,
-    Query
+    Prompt = "PROMPT",
+    Report = "REPORT",
+    IsBlacklisted = "IS_BLACKLISTED",
+    GetReportStats = "GET_REPORT_STATS"
 }
 
 export interface Message {
     command: Command,
-    body: QueryRequest| PromptRequest | ReportRequest
-}
-
-export interface QueryRequest {
-    profileId: number
-}
-
-export interface PromptRequest {
-    profileId: number
-}
-
-export interface ReportRequest {
-    profileId: number,
-    type: string,
-    confidence: number,
-    notes: string | null
+    body: number | Report
 }

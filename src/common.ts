@@ -1,6 +1,6 @@
 // TODO: rename to "facebook.ts"?
 
-import { Command, Scammer } from "./types";
+import { Command } from "./types";
 
 /**
  *
@@ -22,7 +22,7 @@ export function profileIdFromGroupProfileUrl(url: string): number {
  *
  * @returns number | null
  */
-function getFacebookUserId(): number | null{
+export function getFacebookProfileId(): number | null {
     const matches = document.getElementById('__eqmc')?.textContent?.match(/.*__user=(\d+)/);
 
     return matches ? parseInt(matches[1]) : null;
@@ -53,21 +53,23 @@ export function updateGroupProfileLinks(): void {
         profileLink.classList.add('sfb_evaluated');
 
         if(e.textContent !== '') {
-            const profileId: number = profileIdFromGroupProfileUrl(profileLink.href);
-
-            chrome.runtime.sendMessage({
-                    command: Command.Query,
-                    body: {
-                        profileId: profileId
-                    },
-                },
-                (scammer: Scammer) => { if(scammer) markAsScammer(profileLink) }
-            );
+            isBlacklisted(profileIdFromGroupProfileUrl(profileLink.href), () => blacklistProfileLink(profileLink))
         }
     });
 }
 
-export function markAsScammer(profileLink: HTMLAnchorElement) {
-    profileLink.classList.add('sfb_scammer');
+function isBlacklisted(profileId: number, performIfBlacklisted: Function) {
+    chrome.runtime.sendMessage({
+            command: Command.IsBlacklisted,
+            body: profileId,
+        },
+        (isInBlacklist: boolean) => {
+            if(isInBlacklist) performIfBlacklisted()
+        }
+    );
+}
+
+export function blacklistProfileLink(profileLink: HTMLAnchorElement) {
+    profileLink.classList.add('sfb_blacklisted');
 }
 

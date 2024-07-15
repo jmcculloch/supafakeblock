@@ -1,18 +1,16 @@
-import { queryGroupProfileLinks, updateGroupProfileLinks, markAsScammer } from './common';
+import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId } from './common';
 import React, { useState } from 'react'
-import { MantineProvider, createTheme } from '@mantine/core';
+import { Accordion, AccordionItem, MantineProvider, Tooltip } from '@mantine/core';
 import { createRoot } from "react-dom/client";
-import { Modal, Button, Text, SegmentedControl, Slider, Textarea, Stack } from '@mantine/core';
+import { Modal, Button, Slider, Textarea, Stack } from '@mantine/core';
 
 import '@mantine/core/styles.css';
-import { Command, Message, PromptRequest, ScammerType } from './types';
+import { Command, Message, ReportType } from './types';
 import { useDisclosure, useInputState } from '@mantine/hooks';
 
 'use strict';
 
-const theme = createTheme({
-/** Put your mantine theme override here */
-});
+const reporterProfileId = getFacebookProfileId();
 
 updateGroupProfileLinks();
 
@@ -24,19 +22,23 @@ function App() {
     const [opened, { close, open }] = useDisclosure(false);
     const [profileId, setProfileId] = useState<number>();
     const [notes, setNotes] = useInputState<string>('');
-    const [scammerType, setScammerType] = useInputState<string>('Scammer');
-    const [confidence, setConfidence] = useInputState<number>(0.5);
+    const [reportType, setReportType] = useInputState<string>(ReportType.SCAMMER);
+    const [confidence, setConfidence] = useInputState<number>(50);
+
+    // TODO: Temporary display of previously known profile stats
+    const [upVotes, setUpVotes] = useInputState<number>(0);
+    const [downVotes, setDownVotes] = useState<number>(0);
+    const [avgConfidence, setAvgConfidence] = useState<number>(0);
 
     /**
      * Register a message listener from the background service -> this context menu handler.
      */
     chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
         // TODO: remove console log
-        console.log(`content script received message: `, request, sender, sendResponse);
-
+        //console.log(`content script received message: `, request, sender, sendResponse);
         switch(request.command) {
             case Command.Prompt:
-                showModal((request.body as PromptRequest).profileId);
+                showModal(request.body as number);
                 break;
             default:
                 console.log(`Received unknown command: `, request.command);
@@ -44,8 +46,23 @@ function App() {
     });
 
     function showModal(profileId: number) {
+        // TODO: fix kludgey state cleanup
+        setNotes(null);
+        setUpVotes(0);
+        setDownVotes(0);
+        setAvgConfidence(0);
+
         setProfileId(profileId);
-        // TODO: lookup name from profileId->link?
+
+        chrome.runtime.sendMessage({
+            command: Command.GetReportStats,
+            body: profileId,
+        }, (response: any) => {
+            setUpVotes(response.up_votes);
+            setDownVotes(response.down_votes);
+            setAvgConfidence(response.avg_confidence);
+        });
+
         open();
     }
 
@@ -55,55 +72,62 @@ function App() {
             command: Command.Report,
             body: {
                 profileId: profileId,
-                type: scammerType,
+                type: reportType,
                 notes: notes,
-                confidence: confidence
+                // Convert 0-100 scale -> 0.0 - 1.0
+                confidence: confidence * 0.01,
+                reporter: reporterProfileId
             }
         });
 
-        // Update UI
-        updateProfile(profileId!);
+        // Render blacklisted group profile links
+        queryGroupProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), profileId);
 
         close();
-        // TODO: better way to clear state? leave scammerType as previously set
-        setConfidence(0.5);
-        setNotes('');
-        setProfileId(undefined);
-    }
-
-    function updateProfile(profileId: number) {
-        queryGroupProfileLinks((e) => markAsScammer(e as HTMLAnchorElement), profileId);
     }
 
     return (
         <>
             <Modal opened={opened} onClose={close} title="Report Profile" centered>
-                <Stack
-                    align="stretch"
-                    justify="center"
-                    gap="xs">
-                    <Text size="md" >Are you sure you want to report PROFILE_NAME ({profileId})?</Text>
+                <Stack align="stretch" justify="center" gap="md">
+                    <Accordion value={reportType} onChange={setReportType}>
+                        <AccordionItem value={ReportType.SCAMMER}>
+                            <Accordion.Control icon="🦹">Scammer</Accordion.Control>
+                            <Accordion.Panel>
+                                A scammer is someone actively trying to ...
+                            </Accordion.Panel>
+                        </AccordionItem>
+                        <AccordionItem value={ReportType.SPAMMER}>
+                            <Accordion.Control icon="🤖">Spammer</Accordion.Control>
+                            <Accordion.Panel>
+                                A spammer is someone who ...
+                            </Accordion.Panel>
+                        </AccordionItem>
+                        <AccordionItem value={ReportType.FAKE_PROFILE}>
+                            <Accordion.Control icon="🧟">Fake Profile</Accordion.Control>
+                            <Accordion.Panel>
+                                A fake profile is ...
+                            </Accordion.Panel>
+                        </AccordionItem>
+                    </Accordion>
 
-                    <SegmentedControl fullWidth size="md" radius="xl" data={[
-                            ScammerType.SCAMMER.toString(),
-                            ScammerType.SPAMMER.toString(),
-                            ScammerType.FAKE_PROFILE.toString()
-                        ]} value={scammerType} onChange={setScammerType}/>
-
-                    <Slider color="red" value={confidence} onChange={setConfidence} marks={[
-                        { value: 0, label: 'Not Sure' },
-                        { value: 50, label: 'Meh?' },
-                        { value: 100, label: 'Positive' },
-                    ]} />
+                    <Tooltip label="How confident are you that this profile is fraudulent?" position="bottom">
+                        <Slider color="red" value={confidence} onChange={setConfidence} />
+                    </Tooltip>
 
                     <Textarea
-                        placeholder="Optional: Enter contextual notes about this profile here."
+                        placeholder="Optional: Enter notes about the fraudulent profile here."
                         label="Notes"
                         autosize
                         minRows={4}
                         value={notes} onChange={setNotes} />
 
                     <Button onClick={report} color="red">Report Profile</Button>
+
+                    Profile Stats:
+                    👍 {upVotes} &nbsp;
+                    👎 {downVotes} &nbsp;
+                    🎰 {avgConfidence.toFixed(2)}
                 </Stack>
             </Modal>
         </>
@@ -113,7 +137,7 @@ function App() {
 const root = createRoot(document.createElement('div'));
 root.render(
   <React.StrictMode>
-    <MantineProvider theme={theme}>
+    <MantineProvider>
         <App/>
     </MantineProvider>
   </React.StrictMode>
