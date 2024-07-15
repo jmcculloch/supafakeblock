@@ -9,7 +9,8 @@ export interface Report {
     type: string,
     confidence: number,
     notes?: string,
-    reporter?: number
+    reporter?: number,
+    dispute?: boolean,
 }
 
 export interface ReportStats {

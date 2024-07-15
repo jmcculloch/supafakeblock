@@ -95,7 +95,8 @@ export class Supabase {
             confidence: report.confidence,
             type: report.type,
             // TODO: authentication
-            reporter: report.reporter
+            reporter: report.reporter,
+            vote: report.dispute ?? false
         });
 
         if(error) {

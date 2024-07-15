@@ -1,6 +1,6 @@
 import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId } from './common';
 import React, { useState } from 'react'
-import { Accordion, AccordionItem, MantineProvider, Tooltip } from '@mantine/core';
+import { Accordion, AccordionItem, HoverCard, MantineProvider, Tooltip, Text } from '@mantine/core';
 import { createRoot } from "react-dom/client";
 import { Modal, Button, Slider, Textarea, Stack } from '@mantine/core';
 
@@ -76,12 +76,32 @@ function App() {
                 notes: notes,
                 // Convert 0-100 scale -> 0.0 - 1.0
                 confidence: confidence * 0.01,
-                reporter: reporterProfileId
+                reporter: reporterProfileId,
             }
         });
 
         // Render blacklisted group profile links
         queryGroupProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), profileId);
+
+        close();
+    }
+
+    // TODO: reduce copy-pasta from report()
+    function dispute() {
+        // Submit report to background/supabase
+        chrome.runtime.sendMessage({
+            command: Command.Report,
+            body: {
+                profileId: profileId,
+                type: reportType,
+                notes: notes,
+                // Convert 0-100 scale -> 0.0 - 1.0
+                confidence: confidence * 0.01,
+                reporter: reporterProfileId,
+            }
+        });
+
+        // TODO: what to do on UI in a dispute case?
 
         close();
     }
@@ -122,7 +142,20 @@ function App() {
                         minRows={4}
                         value={notes} onChange={setNotes} />
 
-                    <Button onClick={report} color="red">Report Profile</Button>
+                    <Tooltip label="Report this is a fraudulent profile.">
+                        <Button onClick={report} color="red">Report Profile</Button>
+                    </Tooltip>
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={dispute} color="red" variant="outline">Dispute Profile</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                            Dispute the fact that this is a fraudulent profile.
+                            Please fill out the notes section with the reasons you believe this account should not be considered a fraudulent profile.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
 
                     Profile Stats:
                     👍 {upVotes} &nbsp;
