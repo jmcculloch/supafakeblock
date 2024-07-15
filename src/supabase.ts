@@ -2,10 +2,10 @@ require('rxdb-supabase');
 
 import { createRxDatabase, RxJsonSchema } from "rxdb"
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
-import { Scammer, ScammerType } from './types';
+import { Report, ReportStats } from './types';
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -29,6 +29,11 @@ const SCHEMA: RxJsonSchema<any> = {
 export class Supabase {
     private myCollection: any;
     private static instance : Supabase;
+    private static supabaseClient: SupabaseClient;
+
+    constructor() {
+        Supabase.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
 
     public static async init(): Promise<Supabase> {
         if(this.instance != null) {
@@ -37,21 +42,19 @@ export class Supabase {
 
         this.instance = new Supabase();
         const db = await createRxDatabase({
-            name: 'scammers',
+            name: 'blacklist',
             storage: getRxStorageDexie()
         });
 
         this.instance.myCollection = await db.addCollections({
-            scammers: {
+            blacklist: {
                 schema: SCHEMA
             }
         });
 
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         const replication = new SupabaseReplication({
-            supabaseClient: supabaseClient,
-            collection: this.instance.myCollection.scammers,
+            supabaseClient: this.supabaseClient,
+            collection: this.instance.myCollection.blacklist,
             replicationIdentifier: "myId" + SUPABASE_URL,
             pull: {
                 realtimePostgresChanges: true
@@ -63,26 +66,40 @@ export class Supabase {
         return this.instance;
     }
 
-    public async getScammer(profileId: number): Promise<Scammer | null> {
-        const result = await this.myCollection?.scammers.findOne({
+    public async isBlacklisted(profileId: number): Promise<boolean> {
+        const result = await this.myCollection?.blacklist.findOne({
             selector: {
                 id: profileId
             }
         }).exec();
 
-        // TODO: finish this
-        return result ? {
-            profileId: result.id,
-            type: ScammerType.UNKNOWN,
-            confidence: 0.5,
-        }: null;
+        return result != null;
     }
 
-    // TODO: This requires public/anon write access to the scammers table, which is not ideal. Need to replace
-    // with a proper reporting/review mechanism, authentication, etc.
-    public report(scammer: Scammer): void {
-        this.myCollection.scammers.insert({
-            id: scammer.profileId
+    public async getReportStats(profileId: number): Promise<ReportStats | null> {
+        const { data, error } = await Supabase.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
+
+        if(error) {
+            console.log(`Error: `, error);
+        }
+
+        return data[0];
+    }
+
+    // TODO: This requires public/anon write access to the report table, which is not ideal.
+    public async report(report: Report): Promise<void> {
+        const { error } = await Supabase.supabaseClient.from('report').insert({
+            blacklist_id: report.profileId,
+            // TODO: empty->null?
+            notes: report.notes,
+            confidence: report.confidence,
+            type: report.type,
+            // TODO: authentication
+            reporter: report.reporter
         });
+
+        if(error) {
+            console.log(`Error: `, error);
+        }
     }
 }
