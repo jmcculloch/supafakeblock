@@ -4,12 +4,20 @@ export enum ReportType {
     FAKE_PROFILE = 'FAKE_PROFILE',
 }
 
+export enum ReportConfidence {
+    NOT_SURE = '0.25',
+    MEH = '0.5',
+    PROBABLY = '0.75',
+    ABSOLUTELY = '1.0'
+}
+
 export interface Report {
     profileId: number,
     type: string,
     confidence: number,
     notes?: string,
-    reporter?: number
+    reporter?: number,
+    dispute?: boolean,
 }
 
 export interface ReportStats {

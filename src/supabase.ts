@@ -88,6 +88,12 @@ export class Supabase {
 
     // TODO: This requires public/anon write access to the report table, which is not ideal.
     public async report(report: Report): Promise<void> {
+        // TODO: temporary workaround issue#8
+        // This could potentially cause some replication issues
+        this.myCollection.blacklist.insert({
+            id: report.profileId
+        });
+
         const { error } = await Supabase.supabaseClient.from('report').insert({
             blacklist_id: report.profileId,
             // TODO: empty->null?
@@ -95,7 +101,8 @@ export class Supabase {
             confidence: report.confidence,
             type: report.type,
             // TODO: authentication
-            reporter: report.reporter
+            reporter: report.reporter,
+            vote: report.dispute ?? false
         });
 
         if(error) {
