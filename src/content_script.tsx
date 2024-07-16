@@ -1,11 +1,11 @@
 import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId } from './common';
 import React, { useState } from 'react'
-import { Accordion, AccordionItem, HoverCard, MantineProvider, Tooltip, Text } from '@mantine/core';
 import { createRoot } from "react-dom/client";
-import { Modal, Button, Slider, Textarea, Stack } from '@mantine/core';
+import { HoverCard, MantineProvider, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
+import { Modal, Button, Textarea, Stack } from '@mantine/core';
 
 import '@mantine/core/styles.css';
-import { Command, Message, ReportType } from './types';
+import { Command, Message, ReportConfidence, ReportType } from './types';
 import { useDisclosure, useInputState } from '@mantine/hooks';
 
 'use strict';
@@ -22,8 +22,8 @@ function App() {
     const [opened, { close, open }] = useDisclosure(false);
     const [profileId, setProfileId] = useState<number>();
     const [notes, setNotes] = useInputState<string>('');
-    const [reportType, setReportType] = useInputState<string>(ReportType.SCAMMER);
-    const [confidence, setConfidence] = useInputState<number>(50);
+    const [reportType, setReportType] = useState<string>(ReportType.SCAMMER);
+    const [confidence, setConfidence] = useInputState<string>(ReportConfidence.PROBABLY);
 
     // TODO: Temporary display of previously known profile stats
     const [upVotes, setUpVotes] = useInputState<number>(0);
@@ -47,7 +47,7 @@ function App() {
 
     function showModal(profileId: number) {
         // TODO: fix kludgey state cleanup
-        setNotes(null);
+        setNotes('');
         setUpVotes(0);
         setDownVotes(0);
         setAvgConfidence(0);
@@ -58,9 +58,11 @@ function App() {
             command: Command.GetReportStats,
             body: profileId,
         }, (response: any) => {
-            setUpVotes(response.up_votes);
-            setDownVotes(response.down_votes);
-            setAvgConfidence(response.avg_confidence);
+            if(response) {
+                setUpVotes(response.up_votes);
+                setDownVotes(response.down_votes);
+                setAvgConfidence(response.avg_confidence);
+            }
         });
 
         open();
@@ -74,8 +76,7 @@ function App() {
                 profileId: profileId,
                 type: reportType,
                 notes: notes,
-                // Convert 0-100 scale -> 0.0 - 1.0
-                confidence: confidence * 0.01,
+                confidence: parseFloat(confidence),
                 reporter: reporterProfileId,
             }
         });
@@ -95,8 +96,7 @@ function App() {
                 profileId: profileId,
                 type: reportType,
                 notes: notes,
-                // Convert 0-100 scale -> 0.0 - 1.0
-                confidence: confidence * 0.01,
+                confidence: parseFloat(confidence),
                 reporter: reporterProfileId,
             }
         });
@@ -110,30 +110,19 @@ function App() {
         <>
             <Modal opened={opened} onClose={close} title="Report Profile" centered>
                 <Stack align="stretch" justify="center" gap="md">
-                    <Accordion value={reportType} onChange={setReportType}>
-                        <AccordionItem value={ReportType.SCAMMER}>
-                            <Accordion.Control icon="🦹">Scammer</Accordion.Control>
-                            <Accordion.Panel>
-                                A scammer is someone actively trying to ...
-                            </Accordion.Panel>
-                        </AccordionItem>
-                        <AccordionItem value={ReportType.SPAMMER}>
-                            <Accordion.Control icon="🤖">Spammer</Accordion.Control>
-                            <Accordion.Panel>
-                                A spammer is someone who ...
-                            </Accordion.Panel>
-                        </AccordionItem>
-                        <AccordionItem value={ReportType.FAKE_PROFILE}>
-                            <Accordion.Control icon="🧟">Fake Profile</Accordion.Control>
-                            <Accordion.Panel>
-                                A fake profile is ...
-                            </Accordion.Panel>
-                        </AccordionItem>
-                    </Accordion>
 
-                    <Tooltip label="How confident are you that this profile is fraudulent?" position="bottom">
-                        <Slider color="red" value={confidence} onChange={setConfidence} />
-                    </Tooltip>
+                    <RadioGroup variant="vertical" label="Type:" value={reportType} onChange={setReportType}>
+                        <Radio value={ReportType.SCAMMER} label="🦹 Scammer" />
+                        <Radio value={ReportType.SPAMMER} label="🤖 Spammer" />
+                        <Radio value={ReportType.FAKE_PROFILE} label="🧟 Fake Profile" />
+                    </RadioGroup>
+
+                    <RadioGroup variant="vertical" label="Confidence:" value={confidence} onChange={setConfidence}>
+                        <Radio value={ReportConfidence.NOT_SURE} label="Not Sure?" />
+                        <Radio value={ReportConfidence.MEH} label="Meh" />
+                        <Radio value={ReportConfidence.PROBABLY} label="Probably" />
+                        <Radio value={ReportConfidence.ABSOLUTELY} label="Absolutely!" />
+                    </RadioGroup>
 
                     <Textarea
                         placeholder="Optional: Enter notes about the fraudulent profile here."
