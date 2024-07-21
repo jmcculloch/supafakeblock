@@ -15,7 +15,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     chrome.contextMenus.create({
         title: 'Report Profile',
         contexts: ['link'],
-        id: 'test',
+        id: 'report',
+        targetUrlPatterns: [
+            'https://www.facebook.com/groups/*/user/*',
+            // 'https://www.facebook.com/profile.php?id=*',
+            // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
+        ],
+    });
+
+    chrome.contextMenus.create({
+        title: 'Search Facebook',
+        contexts: ['link'],
+        id: 'search',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
             // 'https://www.facebook.com/profile.php?id=*',
@@ -30,15 +41,28 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     /**
      * 
      */
-    chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
+    chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): void {
         const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
-
-        // Send a message back to the content script/DOM to prompt user for report data
         if(tab && tab.id) {
-            chrome.tabs.sendMessage(tab.id, {
-                command: Command.Prompt,
-                body: profileId
-            });
+            switch(info.menuItemId) {
+                // Send a message back to the content script/DOM to prompt user for report data
+                case 'report':
+                    chrome.tabs.sendMessage(tab.id, {
+                        command: Command.Prompt,
+                        body: profileId
+                    });
+                    break;
+                // Open a new tab with a facebook search against the selected text (in a group profile link)
+                case 'search':
+                    // TODO: verify the 'tabs' permission is not necessary
+                    chrome.tabs.create({
+                        url: `https://www.facebook.com/search/top?q=${encodeURIComponent(info.selectionText ?? '')}`,
+                        active: true
+                    });
+                    break;
+                default:
+                    console.log('Unknown context menu ID: ', info.menuItemId);
+            }
         }
     });
 
