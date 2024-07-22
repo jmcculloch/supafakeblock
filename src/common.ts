@@ -37,9 +37,18 @@ export function getFacebookProfileId(): number | null {
 export function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number) {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
     // TODO: document logic at this point
+    // TODO: exclude when aria-hidden=true (but allow when aria-hidden is not specified)
     const matches = document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`);
-    console.log(`queryGroupProfileLinks profileId:${profileId}, count ${matches.length}`);
-    matches.forEach(callback);
+
+    // TODO: remove
+    //console.log(`queryGroupProfileLinks profileId:${profileId}, count ${matches.length}`);
+
+    matches.forEach((e: Element) => {
+        // TODO: port this to the querySelector ?
+        if(e.getAttribute('aria-hidden') !== 'true' && e.textContent !== '') {
+            callback(e);
+        }
+    });
 }
 
 /**
@@ -51,10 +60,7 @@ export function updateGroupProfileLinks(): void {
         const profileLink = e as HTMLAnchorElement;
 
         profileLink.classList.add('sfb_evaluated');
-
-        if(e.textContent !== '') {
-            isBlacklisted(profileIdFromGroupProfileUrl(profileLink.href), () => blacklistProfileLink(profileLink))
-        }
+        isBlacklisted(profileIdFromGroupProfileUrl(profileLink.href), () => blacklistProfileLink(profileLink))
     });
 }
 
