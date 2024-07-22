@@ -1,6 +1,11 @@
 // TODO: rename to "facebook.ts"?
 
+import { createTheme } from "@mantine/core";
 import { Command } from "./types";
+
+export const theme = createTheme({
+    primaryColor: 'red'
+});
 
 /**
  *

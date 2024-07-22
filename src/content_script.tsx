@@ -1,4 +1,4 @@
-import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId } from './common';
+import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId, theme } from './common';
 import React, { useState } from 'react'
 import { createRoot } from "react-dom/client";
 import { HoverCard, MantineProvider, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
@@ -141,11 +141,11 @@ function App() {
                         value={notes} onChange={setNotes} />
 
                     <Tooltip label="Report this is a fraudulent profile.">
-                        <Button onClick={report} color="red">Report Profile</Button>
+                        <Button onClick={report}>Report Profile</Button>
                     </Tooltip>
                     <HoverCard width="280">
                         <HoverCard.Target>
-                            <Button onClick={dispute} color="red" variant="outline">Dispute Profile</Button>
+                            <Button onClick={dispute} variant="outline">Dispute Profile</Button>
                         </HoverCard.Target>
                         <HoverCard.Dropdown>
                             <Text size="sm">
@@ -168,7 +168,7 @@ function App() {
 const root = createRoot(document.createElement('div'));
 root.render(
   <React.StrictMode>
-    <MantineProvider>
+    <MantineProvider theme={theme}>
         <App/>
     </MantineProvider>
   </React.StrictMode>

@@ -89,6 +89,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                 })();
                 break;
             default:
+                break;
         }
 
         // NOTE: We must return true in order to allow the asynchronous response above

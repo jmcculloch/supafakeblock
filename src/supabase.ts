@@ -29,10 +29,10 @@ const SCHEMA: RxJsonSchema<any> = {
 export class Supabase {
     private myCollection: any;
     private static instance : Supabase;
-    private static supabaseClient: SupabaseClient;
+    public supabaseClient: SupabaseClient;
 
     constructor() {
-        Supabase.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        this.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
     public static async init(): Promise<Supabase> {
@@ -53,8 +53,9 @@ export class Supabase {
         });
 
         const replication = new SupabaseReplication({
-            supabaseClient: this.supabaseClient,
+            supabaseClient: this.instance.supabaseClient,
             collection: this.instance.myCollection.blacklist,
+            // TODO: I do not believe we need suffix this
             replicationIdentifier: "myId" + SUPABASE_URL,
             pull: {
                 realtimePostgresChanges: true
@@ -77,7 +78,7 @@ export class Supabase {
     }
 
     public async getReportStats(profileId: number): Promise<ReportStats | null> {
-        const { data, error } = await Supabase.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
+        const { data, error } = await this.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
 
         if(error) {
             console.log(`Error: `, error);
@@ -94,7 +95,7 @@ export class Supabase {
             id: report.profileId
         });
 
-        const { error } = await Supabase.supabaseClient.from('report').insert({
+        const { error } = await this.supabaseClient.from('report').insert({
             blacklist_id: report.profileId,
             // TODO: empty->null?
             notes: report.notes,
@@ -108,5 +109,17 @@ export class Supabase {
         if(error) {
             console.log(`Error: `, error);
         }
+    }
+
+    /**
+     * Utility to delete the local indexeddb tables, which are not visible in Devtools
+     */
+    public static deleteLocalBlacklist(): void {
+        [
+            'rxdb-dexie-blacklist--0--_rxdb_internal',
+            'rxdb-dexie-blacklist--0--blacklist',
+            // TODO: I do not believe we need suffix this
+            'rxdb-dexie-blacklist--0--blacklist-rx-replication-myIdhttps://vknwqxfqzcusbhjjkeoo.supabase.co'
+        ].forEach((name) => indexedDB.deleteDatabase(name));
     }
 }
