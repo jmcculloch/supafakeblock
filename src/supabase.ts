@@ -111,6 +111,10 @@ export class Supabase {
         }
     }
 
+    public async getBlacklistCount(): Promise<number> {
+        return await this.myCollection.blacklist.count({}).exec();
+    }
+
     /**
      * Utility to delete the local indexeddb tables, which are not visible in Devtools
      */

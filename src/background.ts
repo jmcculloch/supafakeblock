@@ -71,26 +71,28 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
      */
     chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
         // TODO: remove
-        // console.log(`Received message: `, request, sender, sendResponse);
-        switch((request as Message).command) {
-            case Command.Report:
-                // Update database
-                // TODO: fix typing on structured Message request
-                supabase.report(request.body as any);
-                break;
-            case Command.IsBlacklisted:
-                (async () => {
+        //console.log(`Received message: `, request, sender, sendResponse);
+
+        (async () => {
+            switch((request as Message).command) {
+                case Command.Report:
+                    // Update database
+                    // TODO: fix typing on structured Message request
+                    supabase.report(request.body as any);
+                    break;
+                case Command.IsBlacklisted:
                     sendResponse(await supabase.isBlacklisted(request.body as number));
-                })();
-                break;
-            case Command.GetReportStats:
-                (async () => {
+                    break;
+                case Command.GetReportStats:
                     sendResponse(await supabase.getReportStats(request.body as number));
-                })();
-                break;
-            default:
-                break;
-        }
+                    break;
+                case Command.BlacklistCount:
+                        sendResponse(await supabase.getBlacklistCount());
+                    break;
+                default:
+                    break;
+            }
+        })();
 
         // NOTE: We must return true in order to allow the asynchronous response above
         return true;

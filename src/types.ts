@@ -30,7 +30,8 @@ export enum Command {
     Prompt = "PROMPT",
     Report = "REPORT",
     IsBlacklisted = "IS_BLACKLISTED",
-    GetReportStats = "GET_REPORT_STATS"
+    GetReportStats = "GET_REPORT_STATS",
+    BlacklistCount = "BLACKLIST_COUNT"
 }
 
 export interface Message {
