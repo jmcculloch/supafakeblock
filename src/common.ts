@@ -23,23 +23,12 @@ export function profileIdFromGroupProfileUrl(url: string): number {
 }
 
 /**
- * Lookup the current user's Facebook profile ID
- *
- * @returns number | null
- */
-export function getFacebookProfileId(): number | null {
-    const matches = document.getElementById('__eqmc')?.textContent?.match(/.*__user=(\d+)/);
-
-    return matches ? parseInt(matches[1]) : null;
-}
-
-/**
  * Search DOM for <a href="/groups/{groupId}/user/{profileId}"> elements.
  *
  * @param callback invokes callback on matching elements
  * @param profileId optional parameter to limit to a specific profileId (will search pre-evaluated links)
  */
-export function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number) {
+export function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number): void {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
     // TODO: document logic at this point
     // TODO: exclude when aria-hidden=true (but allow when aria-hidden is not specified)
@@ -69,7 +58,7 @@ export function updateGroupProfileLinks(): void {
     });
 }
 
-function isBlacklisted(profileId: number, performIfBlacklisted: Function) {
+function isBlacklisted(profileId: number, performIfBlacklisted: Function): void {
     chrome.runtime.sendMessage({
             command: Command.IsBlacklisted,
             body: profileId,
@@ -80,7 +69,37 @@ function isBlacklisted(profileId: number, performIfBlacklisted: Function) {
     );
 }
 
-export function blacklistProfileLink(profileLink: HTMLAnchorElement) {
+export function blacklistProfileLink(profileLink: HTMLAnchorElement): void {
     profileLink.classList.add('sfb_blacklisted');
 }
 
+/**
+ * Sends a message to the background service worker
+ *
+ * @param command
+ * @param body?
+ */
+export function sendMessage(command: Command, body?: any): void {
+    chrome.runtime.sendMessage({
+        command: command,
+        body: body
+    });
+}
+
+/**
+ * Sends a message to the active tab -- this is intended to target the content script
+ *
+ * @param command
+ * @param body?
+ */
+export async function sendMessageToActiveTab(command: Command, body?: any): Promise<void> {
+    // TODO: add current tabId to Message payload to return messages to proper tab?
+    const [tab] = await chrome.tabs.query({ active: true });
+
+    if(tab?.id) {
+        chrome.tabs.sendMessage(tab.id, {
+            command: command,
+            body: body
+        });
+    }
+}

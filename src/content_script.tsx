@@ -1,16 +1,16 @@
-import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, getFacebookProfileId, theme } from './common';
+import { queryGroupProfileLinks, updateGroupProfileLinks, blacklistProfileLink, theme } from './common';
 import React, { useState } from 'react'
 import { createRoot } from "react-dom/client";
 import { HoverCard, MantineProvider, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
-
-import '@mantine/core/styles.css';
 import { Command, Message, ReportConfidence, ReportType } from './types';
 import { useDisclosure, useInputState } from '@mantine/hooks';
+import { Notifications, notifications } from '@mantine/notifications';
+
+import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 
 'use strict';
-
-const reporterProfileId = getFacebookProfileId();
 
 updateGroupProfileLinks();
 
@@ -42,17 +42,27 @@ function App() {
     /**
      * Register a message listener from the background service -> this context menu handler.
      */
-    chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
-        // TODO: remove console log
-        //console.log(`content script received message: `, request, sender, sendResponse);
-        switch(request.command) {
-            case Command.Prompt:
-                showModal(request.body as number);
-                break;
-            default:
-                console.log(`Received unknown command: `, request.command);
-        }
-    });
+    // TODO: Need to fix, react lifecycle causing multiple listeners to get registered
+    React.useEffect(() => {
+        console.log(`App registering message listener`);
+        chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
+            // TODO: remove console log
+            //console.log(`content script received message: `, request, sender, sendResponse);
+
+            switch(request.command) {
+                case Command.Prompt:
+                    showModal(request.body as number);
+                    break;
+                case Command.Notification:
+                    notifications.show(request.body as any);
+                    break;
+                default:
+                    console.log(`Received unknown command: `, request.command);
+            }
+
+            return true;
+        });
+    }, []);
 
     function showModal(profileId: number) {
         // TODO: fix kludgey state cleanup
@@ -85,8 +95,7 @@ function App() {
                 profileId: profileId,
                 type: reportType,
                 notes: notes,
-                confidence: parseFloat(confidence),
-                reporter: reporterProfileId,
+                confidence: parseFloat(confidence)
             }
         });
 
@@ -105,8 +114,7 @@ function App() {
                 profileId: profileId,
                 type: reportType,
                 notes: notes,
-                confidence: parseFloat(confidence),
-                reporter: reporterProfileId,
+                confidence: parseFloat(confidence)
             }
         });
 
@@ -169,6 +177,7 @@ const root = createRoot(document.createElement('div'));
 root.render(
   <React.StrictMode>
     <MantineProvider theme={theme}>
+        <Notifications />
         <App/>
     </MantineProvider>
   </React.StrictMode>

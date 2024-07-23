@@ -4,7 +4,7 @@ import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, Numbe
 
 import '@mantine/core/styles.css';
 import { Supabase } from './supabase';
-import { theme } from './common';
+import { sendMessage, theme } from './common';
 import { Command } from './types';
 
 const Popup = () => {
@@ -39,6 +39,8 @@ const Popup = () => {
           <Space />
           <Group justify="space-between">
             <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
+            <Button variant="outline" fullWidth onClick={() => sendMessage(Command.SignIn)}>Sign In</Button>
+            <Button variant="outline" fullWidth onClick={() => sendMessage(Command.SignOut)}>Sign Out</Button>
           </Group>
         </Card.Section>
 
