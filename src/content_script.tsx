@@ -59,8 +59,6 @@ function App() {
                 default:
                     console.log(`Received unknown command: `, request.command);
             }
-
-            return true;
         });
     }, []);
 
