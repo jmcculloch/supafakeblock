@@ -1,9 +1,11 @@
 {
   "manifest_version": 3,
 
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx8mra/k+pExbtTfnG5quoyZYWPv5agHmO1dP4nqTKPe0TkqGAoTU8C97cdmW5CO6jQKNQhOKu1U2LFZPzQgpfcz6/zTrWxoZzJMBCSnH6J65bGiRufZOEPxTykfy08zWNjSPLa6oDZcdfWWB23h6I/Vs0lhiMRua2rhOnCbKuhFeVGvefE6Hn5xTZROJn/a/4zT67/HoZWcwZy2vSsPm77WK0I9EQIdPNdwBNwjOYNu6g6PelltNmAxb+3XUtnzXqMXG0XmKPb8YxbPyxkws6h6KT1h8jYw+7Pav37aOclgeHTP9omvsXDw+K1salWdw/9wIicO+YmeLEgecllUcTwIDAQAB",
+
   "name": "Supafakeblock",
   "description": "Distributed blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
-  "version": "0.1.2",
+  "version": "0.2.0",
 
   "options_ui": {
     "page": "options.html"
@@ -31,6 +33,7 @@
           "matches": ["https://www.facebook.com/*"],
           "js": ["js/vendor.js", "js/content_script.js"],
           "css": ["supafakeblock.css"]
+
       }
   ],
 
@@ -40,7 +43,7 @@
   },
 
   "permissions": [
-    "contextMenus"
+    "contextMenus", "identity"
   ],
 
   "browser_specific_settings": {

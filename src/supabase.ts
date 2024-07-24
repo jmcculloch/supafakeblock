@@ -2,10 +2,11 @@ require('rxdb-supabase');
 
 import { createRxDatabase, RxJsonSchema } from "rxdb"
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
-import { Report, ReportStats } from './types';
+import { Command, Report, ReportStats } from './types';
+import { sendMessageToActiveTab } from "./common";
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -87,32 +88,28 @@ export class Supabase {
         return data[0];
     }
 
-    // TODO: This requires public/anon write access to the report table, which is not ideal.
     public async report(report: Report): Promise<void> {
-        // TODO: temporary workaround issue#8
-        // This could potentially cause some replication issues
-        this.myCollection.blacklist.insert({
-            id: report.profileId
-        });
-
         const { error } = await this.supabaseClient.from('report').insert({
             blacklist_id: report.profileId,
             // TODO: empty->null?
             notes: report.notes,
             confidence: report.confidence,
             type: report.type,
-            // TODO: authentication
-            reporter: report.reporter,
             vote: report.dispute ?? false
         });
 
+        // TODO: move error handling supabase->background
         if(error) {
             console.log(`Error: `, error);
+            sendMessageToActiveTab(Command.Notification, {
+                title: 'Error',
+                message: error.message,
+            });
         }
     }
 
     public async getBlacklistCount(): Promise<number> {
-        return await this.myCollection.blacklist.count({}).exec();
+        return await this.myCollection.blacklist.count().exec();
     }
 
     /**
@@ -125,5 +122,66 @@ export class Supabase {
             // TODO: I do not believe we need suffix this
             'rxdb-dexie-blacklist--0--blacklist-rx-replication-myIdhttps://vknwqxfqzcusbhjjkeoo.supabase.co'
         ].forEach((name) => indexedDB.deleteDatabase(name));
+    }
+
+    public async signIn(): Promise<User | undefined> {
+        // The documentation is unclear, or performs differently within an extension context.
+        // This returns a suitable URL for the subsequent launchWebAuthFlow call
+        const { data } = await this.supabaseClient.auth.signInWithOAuth(({
+            provider: 'facebook',
+            options: {
+                redirectTo: chrome.identity.getRedirectURL(),
+                // TODO: is this necessary or default?
+                scopes: 'public_profile,email',
+            }
+        }));
+
+        chrome.identity.launchWebAuthFlow({
+            url: data.url!,
+            interactive: true
+        }, async (responseUrl) => {
+            if (chrome.runtime.lastError) {
+                // auth was not successful
+                console.log(`chrome.runtime.lastError: `, chrome.runtime.lastError);
+            }
+            else {
+                // auth was successful, extract the ID token from the redirectedTo URL
+                const url = new URL(responseUrl!);
+                // redirect URL is ${chrome.identity.getRedirectURL()/#access_token=... no ? search params
+                // hence the substring(1)
+                const params = new URLSearchParams(url.hash.substring(1));
+
+                const accessToken = params.get('access_token')!;
+                const refreshToken = params.get('refresh_token')!;
+
+                // TODO: refactor local storage of tokens
+                chrome.storage.local.set({
+                    accessToken: accessToken,
+                    refreshToken: refreshToken
+                });
+
+                return (await this.supabaseClient.auth.setSession({
+                    access_token: params.get('access_token')!,
+                    refresh_token: params.get('refresh_token')!
+                })).data.user;
+            }
+        });
+
+        return undefined;
+    }
+
+    public async getUserFromLocalStorage(): Promise<User | null> {
+        const tokens = await chrome.storage.local.get(['accessToken', 'refreshToken']);
+
+        return (await this.supabaseClient.auth.setSession({
+            access_token: tokens.accessToken,
+            refresh_token: tokens.refreshToken
+        })).data.user;
+    }
+
+    public async signOut(): Promise<void> {
+        await this.supabaseClient.auth.signOut();
+
+        console.log('signOut', await this.supabaseClient.auth.getUser());
     }
 }

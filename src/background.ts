@@ -1,6 +1,7 @@
 import { Supabase } from './supabase';
-import { profileIdFromGroupProfileUrl } from './common';
+import { profileIdFromGroupProfileUrl, sendMessageToActiveTab } from './common';
 import { Command, Message } from './types';
+import { User } from '@supabase/supabase-js';
 
 'use strict';
 
@@ -35,45 +36,49 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
     });
 });
 
+/**
+ * Register contextmenu handler
+ */
+chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): void {
+    const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
+    if(tab && tab.id) {
+        switch(info.menuItemId) {
+            // Send a message back to the content script/DOM to prompt user for report data
+            case 'report':
+                chrome.tabs.sendMessage(tab.id, {
+                    command: Command.Prompt,
+                    body: profileId
+                });
+                break;
+            // Open a new tab with a facebook search against the selected text (in a group profile link)
+            case 'search':
+                chrome.tabs.create({
+                    url: `https://www.facebook.com/search/top?q=${encodeURIComponent(info.selectionText ?? '')}`,
+                    active: true
+                });
+                break;
+            default:
+                console.log('Unknown context menu ID: ', info.menuItemId);
+        }
+    }
+});
+
 (async function () {
     const supabase: Supabase = await Supabase.init();
 
-    /**
-     * 
-     */
-    chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): void {
-        const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
-        if(tab && tab.id) {
-            switch(info.menuItemId) {
-                // Send a message back to the content script/DOM to prompt user for report data
-                case 'report':
-                    chrome.tabs.sendMessage(tab.id, {
-                        command: Command.Prompt,
-                        body: profileId
-                    });
-                    break;
-                // Open a new tab with a facebook search against the selected text (in a group profile link)
-                case 'search':
-                    // TODO: verify the 'tabs' permission is not necessary
-                    chrome.tabs.create({
-                        url: `https://www.facebook.com/search/top?q=${encodeURIComponent(info.selectionText ?? '')}`,
-                        active: true
-                    });
-                    break;
-                default:
-                    console.log('Unknown context menu ID: ', info.menuItemId);
-            }
-        }
-    });
+    // TODO: consistent undefined vs null
+    let user : User | undefined | null = await supabase.getUserFromLocalStorage();
+    console.log(`background init current user is: `, user);
 
     /**
-     * 
+     * Register message handler
      */
     chrome.runtime.onMessage.addListener(function (request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
         // TODO: remove
         //console.log(`Received message: `, request, sender, sendResponse);
 
         (async () => {
+            // TODO: refactor non-switch statement
             switch((request as Message).command) {
                 case Command.Report:
                     // Update database
@@ -87,7 +92,20 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     sendResponse(await supabase.getReportStats(request.body as number));
                     break;
                 case Command.BlacklistCount:
-                        sendResponse(await supabase.getBlacklistCount());
+                    sendResponse(await supabase.getBlacklistCount());
+                    break;
+                case Command.SignIn:
+                    user = await supabase.signIn();
+                    sendResponse(user);
+                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed In' }, sender.tab);
+                    break;
+                case Command.SignOut:
+                    supabase.signOut();
+                    user = undefined;
+                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed Out' }, sender.tab);
+                    break;
+                case Command.GetUser:
+                    sendResponse(user);
                     break;
                 default:
                     break;
