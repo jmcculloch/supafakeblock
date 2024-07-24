@@ -2,7 +2,7 @@ require('rxdb-supabase');
 
 import { createRxDatabase, RxJsonSchema } from "rxdb"
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
 import { Command, Report, ReportStats } from './types';
@@ -98,6 +98,7 @@ export class Supabase {
             vote: report.dispute ?? false
         });
 
+        // TODO: move error handling supabase->background
         if(error) {
             console.log(`Error: `, error);
             sendMessageToActiveTab(Command.Notification, {
@@ -108,7 +109,7 @@ export class Supabase {
     }
 
     public async getBlacklistCount(): Promise<number> {
-        return await this.myCollection.blacklist.count({}).exec();
+        return await this.myCollection.blacklist.count().exec();
     }
 
     /**
@@ -123,7 +124,7 @@ export class Supabase {
         ].forEach((name) => indexedDB.deleteDatabase(name));
     }
 
-    public async signIn(): Promise<void> {
+    public async signIn(): Promise<User | undefined> {
         // The documentation is unclear, or performs differently within an extension context.
         // This returns a suitable URL for the subsequent launchWebAuthFlow call
         const { data } = await this.supabaseClient.auth.signInWithOAuth(({
@@ -142,23 +143,40 @@ export class Supabase {
             if (chrome.runtime.lastError) {
                 // auth was not successful
                 console.log(`chrome.runtime.lastError: `, chrome.runtime.lastError);
-            } else {
+            }
+            else {
                 // auth was successful, extract the ID token from the redirectedTo URL
                 const url = new URL(responseUrl!);
                 // redirect URL is ${chrome.identity.getRedirectURL()/#access_token=... no ? search params
                 // hence the substring(1)
                 const params = new URLSearchParams(url.hash.substring(1));
 
-                await this.supabaseClient.auth.setSession({
+                const accessToken = params.get('access_token')!;
+                const refreshToken = params.get('refresh_token')!;
+
+                // TODO: refactor local storage of tokens
+                chrome.storage.local.set({
+                    accessToken: accessToken,
+                    refreshToken: refreshToken
+                });
+
+                return (await this.supabaseClient.auth.setSession({
                     access_token: params.get('access_token')!,
                     refresh_token: params.get('refresh_token')!
-                });
-                const { data } = await this.supabaseClient.auth.getUser();
-
-                console.log('signIn', data.user);
-                sendMessageToActiveTab(Command.Notification, { title: 'User Signed In', message: data.user?.id });
+                })).data.user;
             }
         });
+
+        return undefined;
+    }
+
+    public async getUserFromLocalStorage(): Promise<User | null> {
+        const tokens = await chrome.storage.local.get(['accessToken', 'refreshToken']);
+
+        return (await this.supabaseClient.auth.setSession({
+            access_token: tokens.accessToken,
+            refresh_token: tokens.refreshToken
+        })).data.user;
     }
 
     public async signOut(): Promise<void> {

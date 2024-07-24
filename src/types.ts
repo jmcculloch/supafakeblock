@@ -34,7 +34,8 @@ export enum Command {
     BlacklistCount = "BLACKLIST_COUNT",
     SignIn = "SIGN_IN",
     SignOut = "SIGN_OUT",
-    Notification = "NOTIFICATION"
+    Notification = "NOTIFICATION",
+    GetUser = "GET_USER"
 }
 
 export interface Message {

@@ -91,10 +91,10 @@ export function sendMessage(command: Command, body?: any): void {
  *
  * @param command
  * @param body?
+ * @param tab?
  */
-export async function sendMessageToActiveTab(command: Command, body?: any): Promise<void> {
-    // TODO: add current tabId to Message payload to return messages to proper tab?
-    const [tab] = await chrome.tabs.query({ active: true });
+export async function sendMessageToActiveTab(command: Command, body?: any, tab?: chrome.tabs.Tab): Promise<void> {
+    tab ??= (await chrome.tabs.query({ active: true }))[0];
 
     if(tab?.id) {
         chrome.tabs.sendMessage(tab.id, {

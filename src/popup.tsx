@@ -6,15 +6,22 @@ import '@mantine/core/styles.css';
 import { Supabase } from './supabase';
 import { sendMessage, theme } from './common';
 import { Command } from './types';
+import { User } from '@supabase/supabase-js';
 
 const Popup = () => {
   const version = chrome.runtime.getManifest().version;
 
   const [blacklistCount, setBlacklistCount] = useState<number>(0);
+  const [user, setUser] = useState<User>();
 
+  // TODO: investigate react lifecycle
   chrome.runtime.sendMessage({
     command: Command.BlacklistCount
   }, (c) => setBlacklistCount(c));
+
+  chrome.runtime.sendMessage({
+    command: Command.GetUser
+  }, (u) => setUser(u ?? undefined));
 
   function deleteBlacklist() {
     if(confirm('WARNING: Are you sure you want to delete the local blacklist? You will need to close and re-open any Facebook tabs you have open.')) {
@@ -39,8 +46,8 @@ const Popup = () => {
           <Space />
           <Group justify="space-between">
             <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
-            <Button variant="outline" fullWidth onClick={() => sendMessage(Command.SignIn)}>Sign In</Button>
-            <Button variant="outline" fullWidth onClick={() => sendMessage(Command.SignOut)}>Sign Out</Button>
+            <Button disabled={user !== undefined} variant="outline" fullWidth onClick={() => sendMessage(Command.SignIn, (user: User) => setUser(user))}>Sign In</Button>
+            <Button disabled={user == undefined} variant="outline" fullWidth onClick={() => { sendMessage(Command.SignOut); setUser(undefined); }}>Sign Out</Button>
           </Group>
         </Card.Section>
 

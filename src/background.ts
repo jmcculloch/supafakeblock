@@ -1,6 +1,7 @@
 import { Supabase } from './supabase';
-import { profileIdFromGroupProfileUrl } from './common';
+import { profileIdFromGroupProfileUrl, sendMessageToActiveTab } from './common';
 import { Command, Message } from './types';
+import { User } from '@supabase/supabase-js';
 
 'use strict';
 
@@ -65,6 +66,10 @@ chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnC
 (async function () {
     const supabase: Supabase = await Supabase.init();
 
+    // TODO: consistent undefined vs null
+    let user : User | undefined | null = await supabase.getUserFromLocalStorage();
+    console.log(`background init current user is: `, user);
+
     /**
      * Register message handler
      */
@@ -90,10 +95,17 @@ chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnC
                     sendResponse(await supabase.getBlacklistCount());
                     break;
                 case Command.SignIn:
-                    supabase.signIn();
+                    user = await supabase.signIn();
+                    sendResponse(user);
+                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed In' }, sender.tab);
                     break;
                 case Command.SignOut:
                     supabase.signOut();
+                    user = undefined;
+                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed Out' }, sender.tab);
+                    break;
+                case Command.GetUser:
+                    sendResponse(user);
                     break;
                 default:
                     break;
