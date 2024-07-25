@@ -20,17 +20,23 @@ export interface Report {
     dispute?: boolean,
 }
 
-export interface ReportStats {
+export interface PromptRequest {
+    profileId: number,
     upVotes: number,
     downVotes: number,
     avgConfidence: number
+}
+
+export interface ReportStats {
+    upVotes: number,
+    downVotes: number,
+    avgConfidence: string
 }
 
 export enum Command {
     Prompt = "PROMPT",
     Report = "REPORT",
     IsBlacklisted = "IS_BLACKLISTED",
-    GetReportStats = "GET_REPORT_STATS",
     BlacklistCount = "BLACKLIST_COUNT",
     SignIn = "SIGN_IN",
     SignOut = "SIGN_OUT",
@@ -40,5 +46,5 @@ export enum Command {
 
 export interface Message {
     command: Command,
-    body: number | Report
+    body: number | Report | PromptRequest
 }

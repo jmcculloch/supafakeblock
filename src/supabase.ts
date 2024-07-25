@@ -78,14 +78,19 @@ export class Supabase {
         return result != null;
     }
 
-    public async getReportStats(profileId: number): Promise<ReportStats | null> {
+    public async getReportStats(profileId: number): Promise<ReportStats> {
         const { data, error } = await this.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
 
         if(error) {
             console.log(`Error: `, error);
         }
 
-        return data[0];
+        // TODO: rethink null/default values ?
+        return {
+            upVotes: data[0]?.up_votes ?? 0,
+            downVotes: data[0]?.down_votes ?? 0 ,
+            avgConfidence: data[0]?.avg_confidence.toFixed(2) ?? '0.00'
+        }
     }
 
     public async report(report: Report): Promise<void> {
