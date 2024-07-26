@@ -5,8 +5,7 @@ import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
-import { Command, Report, ReportStats } from './types';
-import { sendMessageToActiveTab } from "./common";
+import { Report, ReportStats } from './types';
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -93,7 +92,8 @@ export class Supabase {
         }
     }
 
-    public async report(report: Report): Promise<void> {
+    // TODO: throws Error?
+    public async report(report: Report): Promise<void | Error> {
         const { error } = await this.supabaseClient.from('report').insert({
             blacklist_id: report.profileId,
             // TODO: empty->null?
@@ -103,14 +103,8 @@ export class Supabase {
             vote: report.dispute ?? false
         });
 
-        // TODO: move error handling supabase->background
-        if(error) {
-            console.log(`Error: `, error);
-            sendMessageToActiveTab(Command.Notification, {
-                title: 'Error',
-                message: error.message,
-            });
-        }
+        // TODO: rethink void|Error
+        return error;
     }
 
     public async getBlacklistCount(): Promise<number> {
@@ -159,11 +153,7 @@ export class Supabase {
                 const accessToken = params.get('access_token')!;
                 const refreshToken = params.get('refresh_token')!;
 
-                // TODO: refactor local storage of tokens
-                chrome.storage.local.set({
-                    accessToken: accessToken,
-                    refreshToken: refreshToken
-                });
+                this.setUserInLocalStorage(accessToken, refreshToken);
 
                 return (await this.supabaseClient.auth.setSession({
                     access_token: params.get('access_token')!,
@@ -175,18 +165,31 @@ export class Supabase {
         return undefined;
     }
 
-    public async getUserFromLocalStorage(): Promise<User | null> {
-        const tokens = await chrome.storage.local.get(['accessToken', 'refreshToken']);
-
-        return (await this.supabaseClient.auth.setSession({
-            access_token: tokens.accessToken,
-            refresh_token: tokens.refreshToken
-        })).data.user;
-    }
-
     public async signOut(): Promise<void> {
         await this.supabaseClient.auth.signOut();
+    }
 
-        console.log('signOut', await this.supabaseClient.auth.getUser());
+    public async getUserFromLocalStorage(): Promise<User | null> {
+        // TODO: chrome.storage.session ?
+        const tokens = await chrome.storage.local.get(['accessToken', 'refreshToken']);
+
+        const { data, error } = await this.supabaseClient.auth.setSession({
+            access_token: tokens.accessToken,
+            refresh_token: tokens.refreshToken
+        });
+
+        if(error) {
+            console.log(`Error: `, error);
+        }
+
+        return data.user;
+    }
+
+    private async setUserInLocalStorage(accessToken: string, refreshToken: string): Promise<void> {
+        // TODO: refactor local storage of tokens
+        chrome.storage.local.set({
+            accessToken: accessToken,
+            refreshToken: refreshToken
+        });
     }
 }

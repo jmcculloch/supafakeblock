@@ -28,7 +28,7 @@ export function ReportModal(props: ReportModalProps) {
         // Render blacklisted group profile links
         queryGroupProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), props.profileId);
 
-        close();
+        props.close();
     }
 
     // TODO: reduce copy-pasta from report()
@@ -46,7 +46,7 @@ export function ReportModal(props: ReportModalProps) {
 
         // TODO: what to do on UI in a dispute case?
 
-        close();
+        props.close();
     }
   
     return (<>

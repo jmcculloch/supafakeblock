@@ -1,20 +1,20 @@
 import { Supabase } from './supabase';
-import { profileIdFromGroupProfileUrl, sendMessageToActiveTab } from './common';
-import { Command, Message, ReportStats } from './types';
+import { errorNotification, notification, profileIdFromGroupProfileUrl } from './common';
+import { Command, Message } from './types';
 import { User } from '@supabase/supabase-js';
 
 'use strict';
 
 /**
+ * TODO: update doc
  * Register a context menu item to "Report Profile" for:
  * - group profile links
  * - generic profile links by ID
- * 
- * TODO: how to support links with "nickname", e.g. https://www.facebook.com/nickname/?
  */
 chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.InstalledDetails) {
+    // TODO: doc
     chrome.contextMenus.create({
-        title: 'Report Profile',
+        title: 'Report',
         contexts: ['link'],
         id: 'report',
         targetUrlPatterns: [
@@ -24,14 +24,14 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         ],
     });
 
+    // TODO: doc
     chrome.contextMenus.create({
-        title: 'Search Facebook',
+        title: 'Search',
         contexts: ['link'],
         id: 'search',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
-            // 'https://www.facebook.com/profile.php?id=*',
-            // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
+            // TODO: other patterns or just for groups?
         ],
     });
 });
@@ -39,9 +39,9 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
 (async function () {
     const supabase: Supabase = await Supabase.init();
 
-    // TODO: consistent undefined vs null
-    let user : User | undefined | null = await supabase.getUserFromLocalStorage();
-    console.log(`background init current user is: `, user);
+    // TODO: manage user/auth state
+    let user : User | null = await supabase.getUserFromLocalStorage();
+    // console.log(`background init current user is: `, user);
 
     /**
      * Register message handler
@@ -56,7 +56,11 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                 case Command.Report:
                     // Update database
                     // TODO: fix typing on structured Message request
-                    supabase.report(request.body as any);
+                    const error = await supabase.report(request.body as any);
+                    if(error) {
+                        console.log(`Error: `, error);
+                        errorNotification(error.name, error.message, sender.tab);
+                    }
                     break;
                 case Command.IsBlacklisted:
                     sendResponse(await supabase.isBlacklisted(request.body as number));
@@ -65,17 +69,13 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     sendResponse(await supabase.getBlacklistCount());
                     break;
                 case Command.SignIn:
-                    user = await supabase.signIn();
+                    const user = await supabase.signIn();
+                    notification('User Signed In');
                     sendResponse(user);
-                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed In' }, sender.tab);
                     break;
                 case Command.SignOut:
                     supabase.signOut();
-                    user = undefined;
-                    sendMessageToActiveTab(Command.Notification, { title: 'User Signed Out' }, sender.tab);
-                    break;
-                case Command.GetUser:
-                    sendResponse(user);
+                    notification('User Signed Out');
                     break;
                 default:
                     break;
@@ -94,9 +94,19 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         if(tab && tab.id) {
             switch(info.menuItemId) {
                 // Send a message back to the content script/DOM to prompt user for report data
+                // with additional statistics on the profile if it already exists (prompt is overloaded)
                 case 'report':
+                    // Auth Guard
+                    if(user == null) {
+                        errorNotification('Sign In Required', 'You must be signed in to report a profile.', tab);
+                        return;
+                    }
+
                     (async () => {
-                        const response: ReportStats = await supabase.getReportStats(profileId);
+                        const response = {
+                            profileId: profileId,
+                            ...(await supabase.getReportStats(profileId))
+                        };
 
                         chrome.tabs.sendMessage(tab.id!, {
                             command: Command.Prompt,

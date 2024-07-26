@@ -4,20 +4,9 @@ import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, Numbe
 
 import '@mantine/core/styles.css';
 import { Supabase } from './supabase';
-import { sendMessage, theme } from './common';
+import { sendMessageToBackground, theme } from './common';
 import { Command } from './types';
 import { User } from '@supabase/supabase-js';
-
-let blacklistCount: number = 0;
-let user: User | undefined;
-
-chrome.runtime.sendMessage({
-    command: Command.BlacklistCount
-}, (c) => blacklistCount = c);
-
-chrome.runtime.sendMessage({
-    command: Command.GetUser
-}, (u) => user = u);
 
 interface PopupProps {
     blacklistCount: number
@@ -26,9 +15,6 @@ interface PopupProps {
 
 function Popup(props: PopupProps) {
     const version = chrome.runtime.getManifest().version;
-
-    const [blacklistCount, setBlacklistCount] = useState<number>(props.blacklistCount);
-    const [user, setUser] = useState<User | undefined>(props.user);
 
     function deleteBlacklist() {
         if(confirm('WARNING: Are you sure you want to delete the local blacklist? You will need to close and re-open any Facebook tabs you have open.')) {
@@ -39,11 +25,11 @@ function Popup(props: PopupProps) {
     }
 
     function signin() {
-        sendMessage(Command.SignIn);
+        sendMessageToBackground(Command.SignIn);
     }
 
     function signout() {
-        sendMessage(Command.SignOut);
+        sendMessageToBackground(Command.SignOut);
     }
 
     return (<>
@@ -52,17 +38,19 @@ function Popup(props: PopupProps) {
                 <Image src="icon-128.png"/>
             </Card.Section>
 
-            <Card.Section withBorder>
-                <Text>{user?.user_metadata?.name}</Text>
-                <Text>Blacklist Size <NumberFormatter value={blacklistCount} thousandSeparator /></Text>
-            </Card.Section>
+            {/* <Card.Section withBorder>
+                <Text>{props.user?.user_metadata?.name}</Text>
+                <Text>Blacklist Size <NumberFormatter value={props.blacklistCount} thousandSeparator /></Text>
+            </Card.Section> */}
 
           <Card.Section withBorder>
               <Space />
               <Group justify="space-between">
                   <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
-                  <Button disabled={user !== undefined} variant="outline" fullWidth onClick={signin}>Sign In</Button>
-                  <Button disabled={user == undefined} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
+                  {/* TODO: fix w/ state - props.user !== undefined */}
+                  <Button disabled={false} variant="outline" fullWidth onClick={signin}>Sign In</Button>
+                  {/* TODO: fix w/ state - props.user == undefined */}
+                  <Button disabled={false} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
               </Group>
           </Card.Section>
 
@@ -76,11 +64,22 @@ function Popup(props: PopupProps) {
     </>);
 };
 
+function PopupApp() {
+    const [blacklistCount, setBlacklistCount] = useState<number>(0);
+    const [user, setUser] = useState<User | undefined>();
+
+    // TODO: retrieve blacklistCount, User w/out creating react render loop
+
+    return (<>
+        <Popup blacklistCount={blacklistCount} user={user}/>
+    </>);
+};
+
 const root = createRoot(document.getElementById("root")!);
 root.render(
 <React.StrictMode>
     <MantineProvider theme={theme}>
-        <Popup blacklistCount={blacklistCount} user={user} />
+        <PopupApp />
     </MantineProvider>
 </React.StrictMode>
 );

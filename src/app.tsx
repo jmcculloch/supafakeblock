@@ -21,7 +21,6 @@ export function App() {
 
         switch(request.command) {
             case Command.Prompt:
-                // TODO: get report stats with message?
                 showModal(request.body as PromptRequest);
                 break;
             case Command.Notification:
@@ -29,6 +28,7 @@ export function App() {
                 break;
             default:
                 console.log(`Received unknown command: `, request.command);
+                break;
         }
     }
 
