@@ -39,10 +39,12 @@ export enum Command {
     // background->extension
     Prompt = "PROMPT",
     Notification = "NOTIFICATION",
+    SignInRequired = "SIGN_IN_REQUIRED",
     // extension->background
     Report = "REPORT",
     IsBlacklisted = "IS_BLACKLISTED",
     BlacklistCount = "BLACKLIST_COUNT",
+    GetUser = "GET_USER",
     SignIn = "SIGN_IN",
     SignOut = "SIGN_OUT"
 }

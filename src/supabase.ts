@@ -123,7 +123,7 @@ export class Supabase {
         ].forEach((name) => indexedDB.deleteDatabase(name));
     }
 
-    public async signIn(): Promise<User | undefined> {
+    public async signIn(authenticatedCallback: (user: User) => void): Promise<void> {
         // The documentation is unclear, or performs differently within an extension context.
         // This returns a suitable URL for the subsequent launchWebAuthFlow call
         const { data } = await this.supabaseClient.auth.signInWithOAuth(({
@@ -155,23 +155,31 @@ export class Supabase {
 
                 this.setUserInLocalStorage(accessToken, refreshToken);
 
-                return (await this.supabaseClient.auth.setSession({
+                const user = (await this.supabaseClient.auth.setSession({
                     access_token: params.get('access_token')!,
                     refresh_token: params.get('refresh_token')!
                 })).data.user;
+
+                if(user) {
+                    authenticatedCallback(user);
+                }
+                // TODO: else?
             }
         });
-
-        return undefined;
     }
 
     public async signOut(): Promise<void> {
+        this.removeUserInLocalStorage();
         await this.supabaseClient.auth.signOut();
     }
 
     public async getUserFromLocalStorage(): Promise<User | null> {
         // TODO: chrome.storage.session ?
         const tokens = await chrome.storage.local.get(['accessToken', 'refreshToken']);
+
+        if(!tokens.accessToken && !tokens.refreshToken) {
+            return null;
+        }
 
         const { data, error } = await this.supabaseClient.auth.setSession({
             access_token: tokens.accessToken,
@@ -185,11 +193,17 @@ export class Supabase {
         return data.user;
     }
 
-    private async setUserInLocalStorage(accessToken: string, refreshToken: string): Promise<void> {
+    private async setUserInLocalStorage(accessToken?: string, refreshToken?: string): Promise<void> {
         // TODO: refactor local storage of tokens
         chrome.storage.local.set({
             accessToken: accessToken,
             refreshToken: refreshToken
         });
+    }
+
+    // TODO: rename tokens vs user
+    private async removeUserInLocalStorage(): Promise<void> {
+        // TODO: refactor local storage of tokens
+        chrome.storage.local.remove(['accessToken', 'refreshToken']);
     }
 }

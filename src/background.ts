@@ -1,5 +1,5 @@
 import { Supabase } from './supabase';
-import { errorNotification, notification, profileIdFromGroupProfileUrl } from './common';
+import { errorNotification, notification, profileIdFromGroupProfileUrl, sendMessageToActiveTab } from './common';
 import { Command, Message } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -39,8 +39,8 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
 (async function () {
     const supabase: Supabase = await Supabase.init();
 
-    // TODO: manage user/auth state
     let user : User | null = await supabase.getUserFromLocalStorage();
+    // TODO: remove
     // console.log(`background init current user is: `, user);
 
     /**
@@ -68,13 +68,23 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                 case Command.BlacklistCount:
                     sendResponse(await supabase.getBlacklistCount());
                     break;
-                case Command.SignIn:
-                    const user = await supabase.signIn();
-                    notification('User Signed In');
+                case Command.GetUser:
                     sendResponse(user);
+                    break;
+                case Command.SignIn:
+                    await supabase.signIn((u: User) => {
+                        // Update local auth state
+                        user = u;
+
+                        notification('User Signed In');
+                    });
                     break;
                 case Command.SignOut:
                     supabase.signOut();
+
+                    // Update local auth state
+                    user = null;
+
                     notification('User Signed Out');
                     break;
                 default:
@@ -98,7 +108,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                 case 'report':
                     // Auth Guard
                     if(user == null) {
-                        errorNotification('Sign In Required', 'You must be signed in to report a profile.', tab);
+                        sendMessageToActiveTab(Command.SignInRequired, tab);
                         return;
                     }
 
