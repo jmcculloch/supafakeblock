@@ -79,11 +79,19 @@ export function blacklistProfileLink(profileLink: HTMLAnchorElement): void {
  * @param command
  * @param body?
  */
-export function sendMessage(command: Command, body?: any): void {
-    chrome.runtime.sendMessage({
-        command: command,
-        body: body
-    });
+export function sendMessageToBackground<R = any>(command: Command, body?: any, responseCallback?: (response: R) => void): void {
+    if(responseCallback) {
+        chrome.runtime.sendMessage({
+            command: command,
+            body: body
+        }, responseCallback);
+    }
+    else {
+        chrome.runtime.sendMessage({
+            command: command,
+            body: body
+        });
+    }
 }
 
 /**
@@ -102,4 +110,16 @@ export async function sendMessageToActiveTab(command: Command, body?: any, tab?:
             body: body
         });
     }
+}
+
+export async function notification(title: string, message?: string, isError: boolean = false, tab?: chrome.tabs.Tab): Promise<void> {
+    sendMessageToActiveTab(Command.Notification, {
+        title: title,
+        ...(message && { message: message }),
+        ...(isError && { color: 'red' })
+    }, tab);
+}
+
+export async function errorNotification(title: string, message?: string, tab?: chrome.tabs.Tab): Promise<void> {
+    notification(title, message, true, tab);
 }

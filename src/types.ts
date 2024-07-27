@@ -1,3 +1,5 @@
+import { User } from "@supabase/supabase-js"
+
 export enum ReportType {
     SCAMMER = 'SCAMMER',
     SPAMMER = 'SPAMMER',
@@ -20,25 +22,36 @@ export interface Report {
     dispute?: boolean,
 }
 
-export interface ReportStats {
+export interface PromptRequest {
+    profileId: number,
     upVotes: number,
     downVotes: number,
     avgConfidence: number
 }
 
+export interface ReportStats {
+    upVotes: number,
+    downVotes: number,
+    avgConfidence: string
+}
+
 export enum Command {
+    // background->extension
     Prompt = "PROMPT",
+    Notification = "NOTIFICATION",
+    SignInRequired = "SIGN_IN_REQUIRED",
+    // extension->background
     Report = "REPORT",
     IsBlacklisted = "IS_BLACKLISTED",
-    GetReportStats = "GET_REPORT_STATS",
     BlacklistCount = "BLACKLIST_COUNT",
+    GetUser = "GET_USER",
     SignIn = "SIGN_IN",
-    SignOut = "SIGN_OUT",
-    Notification = "NOTIFICATION",
-    GetUser = "GET_USER"
+    SignOut = "SIGN_OUT"
 }
 
 export interface Message {
     command: Command,
-    body: number | Report
+    // TODO: refactor
+    // TODO: abstract supabase-js User definition
+    body: number | Report | PromptRequest | User
 }
