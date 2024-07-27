@@ -106,5 +106,6 @@ interface ReportModalProps {
     upVotes: number;
     downVotes: number;
     avgConfidence: number;
+    notes: string;
 }
   

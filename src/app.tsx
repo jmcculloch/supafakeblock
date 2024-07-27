@@ -53,6 +53,6 @@ export function App() {
     }
 
     return (<>
-        <ReportModal opened={opened} close={close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} />
+        <ReportModal opened={opened} close={close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} notes='' />
     </>);
 }
