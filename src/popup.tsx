@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from "react-dom/client";
 import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, NumberFormatter } from '@mantine/core';
 
@@ -10,7 +10,7 @@ import { User } from '@supabase/supabase-js';
 
 interface PopupProps {
     blacklistCount: number
-    user: User | undefined,
+    user?: User,
 }
 
 function Popup(props: PopupProps) {
@@ -38,19 +38,17 @@ function Popup(props: PopupProps) {
                 <Image src="icon-128.png"/>
             </Card.Section>
 
-            {/* <Card.Section withBorder>
+            <Card.Section withBorder>
                 <Text>{props.user?.user_metadata?.name}</Text>
                 <Text>Blacklist Size <NumberFormatter value={props.blacklistCount} thousandSeparator /></Text>
-            </Card.Section> */}
+            </Card.Section>
 
           <Card.Section withBorder>
               <Space />
               <Group justify="space-between">
                   <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
-                  {/* TODO: fix w/ state - props.user !== undefined */}
-                  <Button disabled={false} variant="outline" fullWidth onClick={signin}>Sign In</Button>
-                  {/* TODO: fix w/ state - props.user == undefined */}
-                  <Button disabled={false} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
+                  <Button disabled={props.user !== null} variant="outline" fullWidth onClick={signin}>Sign In</Button>
+                  <Button disabled={props.user == null} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
               </Group>
           </Card.Section>
 
@@ -66,9 +64,15 @@ function Popup(props: PopupProps) {
 
 function PopupApp() {
     const [blacklistCount, setBlacklistCount] = useState<number>(0);
-    const [user, setUser] = useState<User | undefined>();
+    const [user, setUser] = useState<User>();
 
-    // TODO: retrieve blacklistCount, User w/out creating react render loop
+    useEffect(() => {
+       sendMessageToBackground(Command.BlacklistCount, null, (c) => setBlacklistCount(c));
+       sendMessageToBackground(Command.GetUser, null, (u) => setUser(u));
+
+        return () => {
+        };
+    });
 
     return (<>
         <Popup blacklistCount={blacklistCount} user={user}/>
