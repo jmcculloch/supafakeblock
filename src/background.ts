@@ -107,10 +107,11 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                 // with additional statistics on the profile if it already exists (prompt is overloaded)
                 case 'report':
                     // Auth Guard
-                    if(user == null) {
+                    // TODO: re-eneable when supabase RLS policies are back in place with viable FB Login
+                    /*if(user == null) {
                         sendMessageToActiveTab(Command.SignInRequired, tab);
                         return;
-                    }
+                    }*/
 
                     (async () => {
                         const response = {
