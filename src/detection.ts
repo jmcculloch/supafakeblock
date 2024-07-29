@@ -1,7 +1,7 @@
 import { NotificationData, notifications } from '@mantine/notifications';
 import { markAsEvaluated } from "./common";
 
-const CLONED_NICKNAME_REGEX = /^https:\/\/www.facebook.com\/.*\d+.*\/$/;
+const CLONED_NICKNAME_REGEX = /^https:\/\/www.facebook.com\/.*\d+.*\D+\/$/;
 const PRONOUN_REGEX = /updated (.*) profile picture/;
 
 let clonedNicknameCheck = false;
@@ -35,11 +35,13 @@ function checkForClonedNickname(): void {
 }
 
 function checkForPronoun(): void {
+    // TODO: remove re: Array.some
     if(pronounFound) {
         return;
     }
 
-    document.querySelectorAll('h2[id^=":"][id$=":"]:not(.sfb_evaluated)').forEach((e: Element) => {
+    // TODO: this is a questionable query selector
+    Array.from(document.querySelectorAll('h2[id^=":"][id$=":"]:not(.sfb_evaluated)')).some((e: Element) => {
         markAsEvaluated(e);
 
         const matches = e.textContent?.match(PRONOUN_REGEX);
@@ -52,7 +54,9 @@ function checkForPronoun(): void {
                 message: `🧑 Pronoun Detected: ${matches[1]}`,
             });
 
-            return;
+            // NOTE: breaks out of Array.some loop
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some
+            return true;
         }
     });
 }
@@ -77,6 +81,7 @@ function checkForAngryReactions(): void {
     });
 }
 
+// TODO: exclude "life events"
 function checkForBackdatedPosts(): void {
     if(backdatedPosts) {
         return;
