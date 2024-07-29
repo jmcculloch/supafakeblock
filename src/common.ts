@@ -53,9 +53,13 @@ export function updateGroupProfileLinks(): void {
     queryGroupProfileLinks(async (e: Element) => {
         const profileLink = e as HTMLAnchorElement;
 
-        profileLink.classList.add('sfb_evaluated');
+        markAsEvaluated(profileLink);
         isBlacklisted(profileIdFromGroupProfileUrl(profileLink.href), () => blacklistProfileLink(profileLink))
     });
+}
+
+export function markAsEvaluated(e: Element) {
+    e.classList.add('sfb_evaluated');
 }
 
 function isBlacklisted(profileId: number, performIfBlacklisted: Function): void {
