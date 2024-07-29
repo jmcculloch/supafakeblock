@@ -46,7 +46,6 @@ function checkForPronoun(): void {
 
         const matches = e.textContent?.match(PRONOUN_REGEX);
         if(matches) {
-            console.log(`Found a pronoun match: `, matches);
             pronounFound = true;
 
             showNotification({
