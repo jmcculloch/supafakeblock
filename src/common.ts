@@ -7,41 +7,52 @@ export const theme = createTheme({
     primaryColor: 'red'
 });
 
-/**
- *
- */
 const GROUP_PROFILE_LINK_REGEX = /.*\/groups\/\d+\/user\/(\d+)\//;
+// NOTE: Adding a '$' to the end of the regex will limit to profileId=12345 and ignore links
+// with additional search params this cuts down on links to navigate a profile page but also
+// prevents links from popup cards, etc
+const PROFILE_LINK_REGEX = /.*\/profile.php\?id=(\d+)/;
 
 /**
- * Parses a Facebook group profile link and extracts the profile ID
- *
- * @param url a relative URL composed of the numeric group and profile IDs (and sometimes some other query string information)
+ * TODO:
+ * @param url
  * @returns number
  */
-export function profileIdFromGroupProfileUrl(url: string): number {
-    return parseInt(url.match(GROUP_PROFILE_LINK_REGEX)![1]);
+export function profileIdFromUrl(url: string): number | null {
+    const regexes = [GROUP_PROFILE_LINK_REGEX, PROFILE_LINK_REGEX];
+    for(let regexIndex in regexes) {
+        let regex = regexes[regexIndex];
+
+        const matches = url.match(regex);
+        if(matches) {
+            return parseInt(matches[1]);
+        }
+    }
+
+    return null;
 }
 
 /**
- * Search DOM for <a href="/groups/{groupId}/user/{profileId}"> elements.
+ * Search DOM for A elements containing profile links
  *
  * @param callback invokes callback on matching elements
  * @param profileId optional parameter to limit to a specific profileId (will search pre-evaluated links)
  */
-export function queryGroupProfileLinks(callback: (e: Element) => void, profileId?: number): void {
+export function queryProfileLinks(callback: (e: Element) => void, profileId?: number): void {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
     // TODO: document logic at this point
     // TODO: exclude when aria-hidden=true (but allow when aria-hidden is not specified)
-    const matches = document.querySelectorAll(`a[href^="/groups/"][href*="/user/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`);
-
-    // TODO: remove
-    //console.log(`queryGroupProfileLinks profileId:${profileId}, count ${matches.length}`);
-
-    matches.forEach((e: Element) => {
-        // TODO: port this to the querySelector ?
-        if(e.getAttribute('aria-hidden') !== 'true' && e.textContent !== '') {
-            callback(e);
-        }
+    [
+        `a[href^="/groups/"][href*="/user/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`,
+        `a[href*="profile.php?id=${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`
+    ].forEach((querySelector) => {
+        const matches = document.querySelectorAll(querySelector);
+        matches.forEach((e: Element) => {
+            // TODO: port this to the querySelector ?
+            if(e.getAttribute('aria-hidden') !== 'true' && e.textContent !== '') {
+                callback(e);
+            }
+        });
     });
 }
 
@@ -49,12 +60,18 @@ export function queryGroupProfileLinks(callback: (e: Element) => void, profileId
  * TODO: rename?
  * TODO: document
  */
-export function updateGroupProfileLinks(): void {
-    queryGroupProfileLinks(async (e: Element) => {
+export function updateProfileLinks(): void {
+    queryProfileLinks(async (e: Element) => {
         const profileLink = e as HTMLAnchorElement;
 
-        markAsEvaluated(profileLink);
-        isBlacklisted(profileIdFromGroupProfileUrl(profileLink.href), () => blacklistProfileLink(profileLink))
+        const profileId = profileIdFromUrl(profileLink.href);
+
+        // NOTE: Hokey but since CSS attribute selectors aren't very powerful we rely on REGEX to
+        // validate URLs, e.g. skipping profile links with additional "search params"
+        if(profileId) {
+            markAsEvaluated(profileLink);
+            isBlacklisted(profileId, () => blacklistProfileLink(profileLink));
+        }
     });
 }
 

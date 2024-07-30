@@ -1,4 +1,4 @@
-import { updateGroupProfileLinks, theme } from './common';
+import { theme, updateProfileLinks } from './common';
 import React from 'react'
 import { createRoot } from "react-dom/client";
 import { MantineProvider } from '@mantine/core';
@@ -11,10 +11,10 @@ import '@mantine/notifications/styles.css';
 
 'use strict';
 
-updateGroupProfileLinks();
+updateProfileLinks();
 
 const observer = new MutationObserver((mutationList, observer) => {
-    updateGroupProfileLinks();
+    updateProfileLinks();
     // TODO: is this required in a MutationObserver? (scroll to see more info)
     detection();
 });
