@@ -4,6 +4,7 @@ import { Command, Message, PromptRequest } from './types';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { SignInModal } from './sign_in_modal';
+import { detection } from './detection';
 
 /**
  *
@@ -30,6 +31,10 @@ export function App() {
                 break;
             case Command.SignInRequired:
                 showSignInModal();
+                break;
+            case Command.Detection:
+                detection();
+                break;
             default:
                 console.log(`Received unknown command: `, request.command);
                 break;

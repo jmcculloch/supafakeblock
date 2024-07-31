@@ -38,7 +38,7 @@ export function profileIdFromUrl(url: string): number | null {
  * @param callback invokes callback on matching elements
  * @param profileId optional parameter to limit to a specific profileId (will search pre-evaluated links)
  */
-export function queryProfileLinks(callback: (e: Element) => void, profileId?: number): void {
+export function queryProfileLinks(callback: (e: HTMLAnchorElement) => void, profileId?: number): void {
     // TODO: better query selector to not evaluate the entire DOM/MutationObserver node?
     // TODO: document logic at this point
     // TODO: exclude when aria-hidden=true (but allow when aria-hidden is not specified)
@@ -48,12 +48,25 @@ export function queryProfileLinks(callback: (e: Element) => void, profileId?: nu
     ].forEach((querySelector) => {
         const matches = document.querySelectorAll(querySelector);
         matches.forEach((e: Element) => {
-            // TODO: port this to the querySelector ?
-            if(e.getAttribute('aria-hidden') !== 'true' && e.textContent !== '') {
-                callback(e);
+            const profileLink = e as HTMLAnchorElement;
+            if(includeElement(profileLink)) {
+                callback(profileLink);
             }
         });
     });
+}
+
+/**
+ * Query selectors can only do so much, this function will evaluate an Element
+ * and exclude known links
+ *
+ * @param e Element
+ * @returns true if Element should be included, false if Element should be ignored
+ */
+
+function includeElement(e: HTMLAnchorElement): boolean {
+    // TODO: port this to the querySelector ?
+    return e.getAttribute('aria-hidden') !== 'true' && e.textContent !== '';
 }
 
 /**
@@ -61,9 +74,7 @@ export function queryProfileLinks(callback: (e: Element) => void, profileId?: nu
  * TODO: document
  */
 export function updateProfileLinks(): void {
-    queryProfileLinks(async (e: Element) => {
-        const profileLink = e as HTMLAnchorElement;
-
+    queryProfileLinks(async (profileLink: HTMLAnchorElement) => {
         const profileId = profileIdFromUrl(profileLink.href);
 
         // NOTE: Hokey but since CSS attribute selectors aren't very powerful we rely on REGEX to
