@@ -5,7 +5,7 @@
 
   "name": "Supafakeblock",
   "description": "Distributed blacklist for reporting and identifying Facebook scammers, spammers, fake accounts, etc.",
-  "version": "0.3.1",
+  "version": "0.3.2",
 
   "options_ui": {
     "page": "options.html"

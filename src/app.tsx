@@ -62,7 +62,7 @@ export function App() {
 
     // TODO: rather than setting notes blank here, do it in ReportModal?
     return (<>
-        <ReportModal opened={reportOpened} close={reportHandlers.close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} notes='' />
+        <ReportModal opened={reportOpened} close={reportHandlers.close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} />
         <SignInModal opened={signInOpened} close={signInHandlers.close} />
     </>);
 }
