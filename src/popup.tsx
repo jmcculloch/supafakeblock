@@ -4,7 +4,7 @@ import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, Numbe
 
 import '@mantine/core/styles.css';
 import { Supabase } from './supabase';
-import { sendMessageToBackground, theme } from './common';
+import { sendMessageToActiveTab, sendMessageToBackground, theme } from './common';
 import { Command } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -47,6 +47,7 @@ function Popup(props: PopupProps) {
               <Space />
               <Group justify="space-between">
                   <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
+                  <Button variant="outline" fullWidth onClick={() => sendMessageToActiveTab(Command.Detection)}>Detection</Button>
                   <Button disabled={props.user !== null} variant="outline" fullWidth onClick={signin}>Sign In</Button>
                   <Button disabled={props.user == null} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
               </Group>

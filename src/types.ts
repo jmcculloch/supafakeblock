@@ -39,6 +39,7 @@ export enum Command {
     Prompt = "PROMPT",
     Notification = "NOTIFICATION",
     SignInRequired = "SIGN_IN_REQUIRED",
+    Detection = "DETECTION",
     // extension->background
     Report = "REPORT",
     IsBlacklisted = "IS_BLACKLISTED",

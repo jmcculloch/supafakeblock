@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
 import { Command, ReportConfidence, ReportType } from './types';
-import { blacklistProfileLink, queryGroupProfileLinks } from './common';
+import { blacklistProfileLink, queryProfileLinks } from './common';
 import { useInputState } from '@mantine/hooks';
 
 /**
@@ -27,7 +27,7 @@ export function ReportModal(props: ReportModalProps) {
         });
 
         // Render blacklisted group profile links
-        queryGroupProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), props.profileId);
+        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), props.profileId);
 
         setNotes('');
         props.close();

@@ -1,5 +1,5 @@
 import { Supabase } from './supabase';
-import { errorNotification, notification, profileIdFromGroupProfileUrl, sendMessageToActiveTab } from './common';
+import { errorNotification, notification, profileIdFromUrl } from './common';
 import { Command, Message } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -19,7 +19,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         id: 'report',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
-            // 'https://www.facebook.com/profile.php?id=*',
+            'https://www.facebook.com/profile.php?id=*'
             // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
         ],
     });
@@ -31,7 +31,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         id: 'search',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
-            // TODO: other patterns or just for groups?
+            'https://www.facebook.com/profile.php?id=*'
         ],
     });
 });
@@ -100,7 +100,14 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
      * Register contextmenu handler
      */
     chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): void {
-        const profileId = profileIdFromGroupProfileUrl(info.linkUrl!);
+        const profileId = profileIdFromUrl(info.linkUrl!);
+
+        // TODO: document this better
+        // NOTE: profileIdFromUrl will return null if the REGEX doesn't match, excluding certain URLs
+        if(!profileId) {
+            return;
+        }
+
         if(tab && tab.id) {
             switch(info.menuItemId) {
                 // Send a message back to the content script/DOM to prompt user for report data
