@@ -70,14 +70,14 @@ export function ReportModal(props: ReportModalProps) {
                     <Radio value={ReportConfidence.ABSOLUTELY} label="Absolutely!" />
                 </RadioGroup>
 
-                {/*  */}
                 <Textarea
                     placeholder="Optional: Enter notes about the fraudulent profile here."
                     label="Notes"
                     autosize
                     minRows={4}
                     value={notes}
-                    onChange={setNotes} />
+                    onChange={setNotes}
+                    data-autofocus />
 
                 <Tooltip label="Report this is a fraudulent profile.">
                     <Button onClick={report}>Report Profile</Button>
