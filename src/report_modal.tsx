@@ -21,13 +21,15 @@ export function ReportModal(props: ReportModalProps) {
                 profileId: props.profileId,
                 type: reportType,
                 notes: notes,
-                confidence: confidence
+                confidence: confidence,
+                dispute: false
             }
         });
 
         // Render blacklisted group profile links
         queryGroupProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), props.profileId);
 
+        setNotes('');
         props.close();
     }
 
@@ -40,12 +42,14 @@ export function ReportModal(props: ReportModalProps) {
                 profileId: props.profileId,
                 type: reportType,
                 notes: notes,
-                confidence: confidence
+                confidence: confidence,
+                dispute: true
             }
         });
 
-        // TODO: what to do on UI in a dispute case?
+        // TODO: what to do to UI in a dispute case?
 
+        setNotes('');
         props.close();
     }
   
@@ -106,6 +110,5 @@ interface ReportModalProps {
     upVotes: number;
     downVotes: number;
     avgConfidence: number;
-    notes: string;
 }
   

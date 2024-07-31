@@ -100,7 +100,7 @@ export class Supabase {
             notes: report.notes,
             confidence: report.confidence,
             type: report.type,
-            vote: report.dispute ?? false
+            vote: !report.dispute ?? true
         });
 
         // TODO: rethink void|Error
