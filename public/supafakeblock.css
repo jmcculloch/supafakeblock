@@ -1,4 +1,33 @@
 .sfb_blacklisted {
-    background-color: rgb(255,0,0) !important;
     display: inherit !important;
 }
+
+.sfb_SCAMMER {
+    background-color: red !important;
+}
+
+.sfb_SPAMMER {
+    background-color: orange !important;
+}
+
+.sfb_FAKE_PROFILE {
+    background-color: yellow !important;
+}
+
+.sfb_blacklisted_not_sure {
+    opacity: 25%;
+}
+
+.sfb_blacklisted_meh {
+    opacity: 50%;
+}
+
+.sfb_blacklisted_probably {
+    opacity: 75%;
+}
+
+.sfb_blacklisted_absolutely {
+    opacity: 100%;
+}
+
+/* TODO: .sfb_UNKNOWN ? */

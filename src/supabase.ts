@@ -5,7 +5,7 @@ import { getRxStorageDexie } from "rxdb/plugins/storage-dexie"
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
-import { Report, ReportStats } from './types';
+import { Report, ReportStats, ReportType } from './types';
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -67,14 +67,20 @@ export class Supabase {
         return this.instance;
     }
 
-    public async isBlacklisted(profileId: number): Promise<boolean> {
+    public async isBlacklisted(profileId: number): Promise<ReportStats | null> {
         const result = await this.myCollection?.blacklist.findOne({
             selector: {
                 id: profileId
             }
         }).exec();
 
-        return result != null;
+        if(result != null) {
+            // TODO: cache?
+            return await this.getReportStats(profileId);
+        }
+
+        // TODO: what to return if not found?
+        return null;
     }
 
     public async getReportStats(profileId: number): Promise<ReportStats> {
@@ -86,6 +92,7 @@ export class Supabase {
 
         // TODO: rethink null/default values ?
         return {
+            type: data[0]?.type ?? ReportType.UNKNOWN,
             upVotes: data[0]?.up_votes ?? 0,
             downVotes: data[0]?.down_votes ?? 0 ,
             avgConfidence: data[0]?.avg_confidence.toFixed(2) ?? '0.00'
