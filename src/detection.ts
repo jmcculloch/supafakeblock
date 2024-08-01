@@ -1,5 +1,4 @@
 import { NotificationData, notifications } from '@mantine/notifications';
-import { markAsEvaluated } from "./common";
 
 const CLONED_NICKNAME_REGEX = /^https:\/\/www.facebook.com\/.*\d+.*\D+\/$/;
 const PRONOUN_REGEX = /updated (.*) profile picture/;
@@ -25,9 +24,7 @@ function checkForClonedNickname(): void {
 
 function checkForPronoun(): void {
     // TODO: this is a questionable query selector
-    Array.from(document.querySelectorAll('h2[id^=":"][id$=":"]:not(.sfb_evaluated)')).some((e: Element) => {
-        markAsEvaluated(e);
-
+    Array.from(document.querySelectorAll('h2[id^=":"][id$=":"]')).some((e: Element) => {
         const matches = e.textContent?.match(PRONOUN_REGEX);
         if(matches) {
             showNotification({
@@ -41,7 +38,7 @@ function checkForPronoun(): void {
 }
 
 function checkForAngryReactions(): void {
-    Array.from(document.querySelectorAll('div[aria-label^="Angry"]:not(.sfb_evaluated)')).some((e: Element) => {
+    Array.from(document.querySelectorAll('div[aria-label^="Angry"]')).some((e: Element) => {
         showNotification({
             title: 'Angry Reaction',
             message: '😡 Angry Reaction Detected',
@@ -55,7 +52,7 @@ function checkForAngryReactions(): void {
 // TODO: exclude "life events"
 function checkForBackdatedPosts(): void {
     // TODO: this is subject to change but looks for backdated posts
-    Array.from(document.querySelectorAll('i[data-visualcompletion="css-img"][style*="/5fllXikzFvB.png"]:not(.sfb_evaluated)')).some((e: Element) => {
+    Array.from(document.querySelectorAll('i[data-visualcompletion="css-img"][style*="/5fllXikzFvB.png"]')).some((e: Element) => {
         showNotification({
             title: 'Back Dated Posts',
             message: '📆 Back Dated Posts Detected',
