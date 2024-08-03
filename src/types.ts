@@ -4,6 +4,7 @@ export enum ReportType {
     SCAMMER = 'SCAMMER',
     SPAMMER = 'SPAMMER',
     FAKE_PROFILE = 'FAKE_PROFILE',
+    UNKNOWN = 'UNKNOWN'
 }
 
 export enum ReportConfidence {
@@ -28,9 +29,11 @@ export interface PromptRequest {
     avgConfidence: number
 }
 
+// TODO: number/string types, and this is getting overload, e.g. optionakl up/down votes
 export interface ReportStats {
-    upVotes: number,
-    downVotes: number,
+    type: string,
+    upVotes?: number,
+    downVotes?: number,
     avgConfidence: string
 }
 

@@ -1,7 +1,7 @@
 // TODO: rename to "facebook.ts"?
 
 import { createTheme } from "@mantine/core";
-import { Command } from "./types";
+import { Command, ReportStats } from "./types";
 
 export const theme = createTheme({
     primaryColor: 'red'
@@ -81,7 +81,7 @@ export function updateProfileLinks(): void {
         // validate URLs, e.g. skipping profile links with additional "search params"
         if(profileId) {
             markAsEvaluated(profileLink);
-            isBlacklisted(profileId, () => blacklistProfileLink(profileLink));
+            isBlacklisted(profileId, profileLink, blacklistProfileLink);
         }
     });
 }
@@ -90,19 +90,29 @@ export function markAsEvaluated(e: Element) {
     e.classList.add('sfb_evaluated');
 }
 
-function isBlacklisted(profileId: number, performIfBlacklisted: Function): void {
+export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement, performIfBlacklisted: (profileLink: HTMLAnchorElement, reportStats: ReportStats) => void): void {
     chrome.runtime.sendMessage({
             command: Command.IsBlacklisted,
             body: profileId,
         },
-        (isInBlacklist: boolean) => {
-            if(isInBlacklist) performIfBlacklisted()
+        (reportStats: ReportStats) => {
+            if(reportStats) {
+                performIfBlacklisted(profileLink, reportStats);
+            }
         }
     );
 }
 
-export function blacklistProfileLink(profileLink: HTMLAnchorElement): void {
-    profileLink.classList.add('sfb_blacklisted');
+export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats: ReportStats): void {
+    profileLink.classList.add('sfb_blacklisted', `sfb_${reportStats.type}`, `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
+}
+
+function confidenceToString(confidence: number): string {
+    if(confidence <= 0.75) return 'not_sure';
+    if(confidence <= 0.50) return 'meh';
+    if(confidence <= 0.25) return 'probably';
+
+    return 'absolutely;'
 }
 
 /**

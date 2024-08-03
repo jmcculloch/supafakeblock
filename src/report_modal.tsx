@@ -27,7 +27,10 @@ export function ReportModal(props: ReportModalProps) {
         });
 
         // Render blacklisted group profile links
-        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement), props.profileId);
+        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
+            type: reportType,
+            avgConfidence: confidence,
+        }), props.profileId);
 
         setNotes('');
         props.close();

@@ -1,5 +1,5 @@
 import { Supabase } from './supabase';
-import { errorNotification, notification, profileIdFromUrl } from './common';
+import { errorNotification, notification, profileIdFromUrl, sendMessageToActiveTab } from './common';
 import { Command, Message } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
             'https://www.facebook.com/groups/*/user/*',
             'https://www.facebook.com/profile.php?id=*'
             // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
-        ],
+        ]
     });
 
     // TODO: doc
@@ -32,7 +32,20 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
             'https://www.facebook.com/profile.php?id=*'
-        ],
+        ]
+    });
+
+    // TODO: doc
+    chrome.contextMenus.create({
+        title: 'Detection',
+        contexts: ['page'],
+        id: 'detection',
+        documentUrlPatterns: [
+            'https://www.facebook.com/profile.php?id=*',
+            // TODO: figure out a pattern to identify aliases profile links
+            //'https://www.facebook.com/*/$',
+            'https://www.facebook.com/*'
+        ]
     });
 });
 
@@ -100,12 +113,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
      * Register contextmenu handler
      */
     chrome.contextMenus.onClicked.addListener(function(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): void {
-        const profileId = profileIdFromUrl(info.linkUrl!);
+        let profileId: number | null = null;
 
-        // TODO: document this better
-        // NOTE: profileIdFromUrl will return null if the REGEX doesn't match, excluding certain URLs
-        if(!profileId) {
-            return;
+        // If a linkUrl is clicked (e.g. a 'link' context menu)
+        if(info.linkUrl) {
+            // Parse the profileId from the link
+            profileId = profileIdFromUrl(info.linkUrl);
+
+            // TODO: document this better
+            // NOTE: profileIdFromUrl will return null if the REGEX doesn't match, excluding certain URLs
+            if(!profileId) {
+                return;
+            }
         }
 
         if(tab && tab.id) {
@@ -123,7 +142,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     (async () => {
                         const response = {
                             profileId: profileId,
-                            ...(await supabase.getReportStats(profileId))
+                            ...(await supabase.getReportStats(profileId!))
                         };
 
                         chrome.tabs.sendMessage(tab.id!, {
@@ -131,6 +150,9 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                             body: response
                         });
                     })();
+                    break;
+                case 'detection':
+                    sendMessageToActiveTab(Command.Detection, null, tab);
                     break;
                 // Open a new tab with a facebook search against the selected text (in a group profile link)
                 case 'search':
