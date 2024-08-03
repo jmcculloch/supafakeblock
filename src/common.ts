@@ -90,7 +90,7 @@ export function markAsEvaluated(e: Element) {
     e.classList.add('sfb_evaluated');
 }
 
-function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement, performIfBlacklisted: (profileLink: HTMLAnchorElement, reportStats: ReportStats) => void): void {
+export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement, performIfBlacklisted: (profileLink: HTMLAnchorElement, reportStats: ReportStats) => void): void {
     chrome.runtime.sendMessage({
             command: Command.IsBlacklisted,
             body: profileId,
