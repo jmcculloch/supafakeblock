@@ -104,7 +104,6 @@ export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement,
 }
 
 export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats: ReportStats): void {
-    console.log(`blacklistProfileLink: `, reportStats);
     profileLink.classList.add('sfb_blacklisted', `sfb_${reportStats.type}`, `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
 }
 
