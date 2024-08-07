@@ -33,7 +33,6 @@
           "matches": ["https://www.facebook.com/*"],
           "js": ["js/vendor.js", "js/content_script.js"],
           "css": ["supafakeblock.css"]
-
       }
   ],
 
@@ -43,7 +42,7 @@
   },
 
   "permissions": [
-    "contextMenus", "identity", "storage"
+    "contextMenus", "identity", "storage", "declarativeContent"
   ],
 
   "browser_specific_settings": {
