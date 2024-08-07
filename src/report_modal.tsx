@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
 import { Command, ReportConfidence, ReportType } from './types';
-import { blacklistProfileLink, queryProfileLinks } from './common';
+import { blacklistProfileLink, emojiForReportType, queryProfileLinks } from './common';
 import { useInputState } from '@mantine/hooks';
 
 /**
@@ -61,9 +61,9 @@ export function ReportModal(props: ReportModalProps) {
             <Stack align="stretch" justify="center" gap="md">
 
                 <RadioGroup variant="vertical" label="Type:" value={reportType} onChange={setReportType}>
-                    <Radio value={ReportType.SCAMMER} label="🦹 Scammer" />
-                    <Radio value={ReportType.SPAMMER} label="🤖 Spammer" />
-                    <Radio value={ReportType.FAKE_PROFILE} label="🧟 Fake Profile" />
+                    <Radio value={ReportType.SCAMMER} label={`${emojiForReportType(ReportType.SCAMMER)} Scammer`} />
+                    <Radio value={ReportType.SPAMMER} label={`${emojiForReportType(ReportType.SPAMMER)} Spammer`} />
+                    <Radio value={ReportType.FAKE_PROFILE} label={`${emojiForReportType(ReportType.FAKE_PROFILE)} Fake Profile`} />
                 </RadioGroup>
 
                 <RadioGroup variant="vertical" label="Confidence:" value={confidence} onChange={setConfidence}>
