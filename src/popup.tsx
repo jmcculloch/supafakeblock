@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from "react-dom/client";
 import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, NumberFormatter } from '@mantine/core';
+import { Supabase } from './supabase';
+import { emojiForReportType, sendMessageToActiveTab, sendMessageToBackground, theme } from './common';
+import { Command, ReportType } from './types';
+import { User } from '@supabase/supabase-js';
 
 import '@mantine/core/styles.css';
-import { Supabase } from './supabase';
-import { sendMessageToActiveTab, sendMessageToBackground, theme } from './common';
-import { Command } from './types';
-import { User } from '@supabase/supabase-js';
 
 interface PopupProps {
     blacklistCount: number
@@ -43,21 +43,29 @@ function Popup(props: PopupProps) {
                 <Text>Blacklist Size <NumberFormatter value={props.blacklistCount} thousandSeparator /></Text>
             </Card.Section>
 
-          <Card.Section withBorder>
-              <Space />
-              <Group justify="space-between">
-                  <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
-                  <Button variant="outline" fullWidth onClick={() => sendMessageToActiveTab(Command.Detection)}>Detection</Button>
-                  <Button disabled={props.user !== null} variant="outline" fullWidth onClick={signin}>Sign In</Button>
-                  <Button disabled={props.user == null} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
-              </Group>
-          </Card.Section>
+            <Card.Section withBorder>
+                <Space />
+                <Group justify="space-between">
+                    <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
+                    <Button variant="outline" fullWidth onClick={() => sendMessageToActiveTab(Command.Detection)}>Detection</Button>
+                    <Button disabled={props.user !== null} variant="outline" fullWidth onClick={signin}>Sign In</Button>
+                    <Button disabled={props.user == null} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
+                </Group>
+            </Card.Section>
 
-          <Card.Section>
-              <Space />
-              <Center>
-                  <Text size="xs">Version {version}</Text>
-              </Center>
+            <Card.Section withBorder>
+                <div>
+                    <div className="sfb_SCAMMER">{emojiForReportType(ReportType.SCAMMER)} Scammer</div>
+                    <div className="sfb_SPAMMER">{emojiForReportType(ReportType.SPAMMER)} Spammer</div>
+                    <div className="sfb_FAKE_PROFILE">{emojiForReportType(ReportType.FAKE_PROFILE)} Fake Profile</div>
+                </div>
+            </Card.Section>
+
+            <Card.Section withBorder>
+                <Space />
+                <Center>
+                    <Text size="xs">Version {version}</Text>
+                </Center>
             </Card.Section>
         </Card>
     </>);

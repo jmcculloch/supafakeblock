@@ -1,7 +1,7 @@
 // TODO: rename to "facebook.ts"?
 
 import { createTheme } from "@mantine/core";
-import { Command, ReportStats } from "./types";
+import { Command, ReportStats, ReportType } from "./types";
 
 export const theme = createTheme({
     primaryColor: 'red'
@@ -104,7 +104,19 @@ export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement,
 }
 
 export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats: ReportStats): void {
+    profileLink.text += ` ${emojiForReportType(reportStats.type)}`;
     profileLink.classList.add('sfb_blacklisted', `sfb_${reportStats.type}`, `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
+}
+
+export function emojiForReportType(type: ReportType | string): string {
+
+    switch(type) {
+        case ReportType.SCAMMER: return '🦹';
+        case ReportType.SPAMMER: return '🤖';
+        case ReportType.FAKE_PROFILE: return '🧟';
+    }
+
+    return '';
 }
 
 function confidenceToString(confidence: number): string {
