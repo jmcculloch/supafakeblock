@@ -6,12 +6,32 @@ import { User } from '@supabase/supabase-js';
 'use strict';
 
 /**
- * TODO: update doc
+ * Fired when the extension is first installed, when the extension is updated or when chrome is updated
+ *
+ * Disables action icon, enables when on https://www.facebook.com
+ *
  * Register a context menu item to "Report Profile" for:
  * - group profile links
  * - generic profile links by ID
  */
 chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.InstalledDetails) {
+    // Set action icon to disabled state
+    chrome.action.disable();
+
+    // Only enable on https://www.facebook.com
+    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+        chrome.declarativeContent.onPageChanged.addRules([
+            {
+                conditions: [
+                  new chrome.declarativeContent.PageStateMatcher({
+                    pageUrl: { schemes: ['https'], hostEquals: 'www.facebook.com' }
+                  })
+                ],
+                actions: [ new chrome.declarativeContent.ShowAction() ]
+            }
+        ]);
+    });
+
     // TODO: doc
     chrome.contextMenus.create({
         title: 'Report',
