@@ -133,13 +133,8 @@ export class Supabase {
     /**
      * Utility to delete the local indexeddb tables, which are not visible in Devtools
      */
-    public static deleteLocalBlacklist(): void {
-        [
-            'rxdb-dexie-blacklist--0--_rxdb_internal',
-            'rxdb-dexie-blacklist--0--blacklist',
-            // TODO: I do not believe we need suffix this
-            `rxdb-dexie-blacklist--0--blacklist-rx-replication-myId${SUPABASE_URL}`
-        ].forEach((name) => indexedDB.deleteDatabase(name));
+    public static async deleteLocalBlacklist(): Promise<void> {
+       (await indexedDB.databases()).filter((db) => db.name?.startsWith('rxdb-dexie-blacklist')).forEach((db) => indexedDB.deleteDatabase(db.name!));
     }
 
     public async signIn(authenticatedCallback: (user: User) => void): Promise<void> {
