@@ -96,7 +96,7 @@ export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement,
             body: profileId,
         },
         (reportStats: ReportStats) => {
-            if(reportStats) {
+            if(reportStats != null) {
                 performIfBlacklisted(profileLink, reportStats);
             }
         }
@@ -104,7 +104,16 @@ export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement,
 }
 
 export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats: ReportStats): void {
-    profileLink.classList.add('sfb_blacklisted', `sfb_${reportStats.type}`, `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
+    // TODO: does blacklisted need to be removed? will it create duplicate entries? -- 'sfb_blacklisted',
+    profileLink.classList.remove('sfb_SCAMMER', 'sfb_SPAMMER', 'sfb_FAKE_PROFILE', 'sfb_WATCH');
+
+    profileLink.classList.add(
+        `sfb_${reportStats.type}`
+    );
+
+    if(reportStats.type != ReportType.WATCH) {
+        profileLink.classList.add('sfb_blacklisted', `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
+    }
 }
 
 export function emojiForReportType(type: ReportType | string): string {
@@ -113,6 +122,7 @@ export function emojiForReportType(type: ReportType | string): string {
         case ReportType.SCAMMER: return '🦹';
         case ReportType.SPAMMER: return '🤖';
         case ReportType.FAKE_PROFILE: return '🧟';
+        case ReportType.WATCH: return '👀';
     }
 
     return '';

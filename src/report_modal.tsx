@@ -55,6 +55,29 @@ export function ReportModal(props: ReportModalProps) {
         setNotes('');
         props.close();
     }
+
+    function watch() {
+        // Submit report to background/supabase
+        chrome.runtime.sendMessage({
+            command: Command.Watch,
+            body: {
+                profileId: props.profileId,
+                // TODO: are the other parameters necessary?
+                type: reportType,
+                notes: notes,
+                confidence: confidence
+            }
+        });
+
+        // Render blacklisted group profile links
+        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
+            type: ReportType.WATCH,
+            avgConfidence: confidence,
+        }), props.profileId);
+
+        setNotes('');
+        props.close();
+    }
   
     return (<>
         <Modal opened={props.opened} onClose={props.close} title="Report Profile" centered>
@@ -85,6 +108,7 @@ export function ReportModal(props: ReportModalProps) {
                 <Tooltip label="Report this is a fraudulent profile.">
                     <Button onClick={report}>Report Profile</Button>
                 </Tooltip>
+                {props.upVotes > 0 ?
                 <HoverCard width="280">
                     <HoverCard.Target>
                         <Button onClick={dispute} variant="outline">Dispute Profile</Button>
@@ -96,6 +120,18 @@ export function ReportModal(props: ReportModalProps) {
                         </Text>
                     </HoverCard.Dropdown>
                 </HoverCard>
+                :
+                <HoverCard width="280">
+                    <HoverCard.Target>
+                        <Button onClick={watch} variant="outline">{emojiForReportType(ReportType.WATCH)} Watch Profile</Button>
+                    </HoverCard.Target>
+                    <HoverCard.Dropdown>
+                        <Text size="sm">
+                        Watch a potential fraudulent profile.
+                        </Text>
+                    </HoverCard.Dropdown>
+                </HoverCard>
+                }
 
                 Profile Stats:
                 👍 {props.upVotes} &nbsp;

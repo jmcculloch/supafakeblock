@@ -4,6 +4,7 @@ export enum ReportType {
     SCAMMER = 'SCAMMER',
     SPAMMER = 'SPAMMER',
     FAKE_PROFILE = 'FAKE_PROFILE',
+    WATCH = 'WATCH',
     UNKNOWN = 'UNKNOWN'
 }
 
@@ -29,7 +30,7 @@ export interface PromptRequest {
     avgConfidence: number
 }
 
-// TODO: number/string types, and this is getting overload, e.g. optionakl up/down votes
+// TODO: number/string types, and this is getting overloaded, e.g. optional up/down votes
 export interface ReportStats {
     type: string,
     upVotes?: number,
@@ -45,6 +46,7 @@ export enum Command {
     Detection = "DETECTION",
     // extension->background
     Report = "REPORT",
+    Watch = "WATCH",
     IsBlacklisted = "IS_BLACKLISTED",
     BlacklistCount = "BLACKLIST_COUNT",
     GetUser = "GET_USER",

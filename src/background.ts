@@ -95,6 +95,10 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                         errorNotification(error.name, error.message, sender.tab);
                     }
                     break;
+                case Command.Watch:
+                    // TODO: fix typing on structured Message request
+                    supabase.watch(request.body as any);
+                    break;
                 case Command.IsBlacklisted:
                     sendResponse(await supabase.isBlacklisted(request.body as number));
                     break;
