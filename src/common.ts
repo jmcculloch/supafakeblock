@@ -104,8 +104,7 @@ export function isBlacklisted(profileId: number, profileLink: HTMLAnchorElement,
 }
 
 export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats: ReportStats): void {
-    // TODO: does blacklisted need to be removed? will it create duplicate entries? -- 'sfb_blacklisted',
-    profileLink.classList.remove('sfb_SCAMMER', 'sfb_SPAMMER', 'sfb_FAKE_PROFILE', 'sfb_WATCH');
+    clearProfileLink(profileLink);
 
     profileLink.classList.add(
         `sfb_${reportStats.type}`
@@ -114,6 +113,10 @@ export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats
     if(reportStats.type != ReportType.WATCH) {
         profileLink.classList.add('sfb_blacklisted', `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
     }
+}
+
+export function clearProfileLink(profileLink: HTMLAnchorElement) {
+    profileLink.classList.remove('sfb_blacklisted', 'sfb_SCAMMER', 'sfb_SPAMMER', 'sfb_FAKE_PROFILE', 'sfb_WATCH');
 }
 
 export function emojiForReportType(type: ReportType | string): string {

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
 import { Command, ReportConfidence, ReportType } from './types';
-import { blacklistProfileLink, emojiForReportType, queryProfileLinks } from './common';
+import { blacklistProfileLink, clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
 import { useInputState } from '@mantine/hooks';
 
 /**
@@ -15,15 +15,12 @@ export function ReportModal(props: ReportModalProps) {
 
     function report() {
         // Submit report to background/supabase
-        chrome.runtime.sendMessage({
-            command: Command.Report,
-            body: {
-                profileId: props.profileId,
-                type: reportType,
-                notes: notes,
-                confidence: confidence,
-                dispute: false
-            }
+        sendMessageToBackground(Command.Report, {
+            profileId: props.profileId,
+            type: reportType,
+            notes: notes,
+            confidence: confidence,
+            dispute: false
         });
 
         // Render blacklisted group profile links
@@ -39,15 +36,12 @@ export function ReportModal(props: ReportModalProps) {
     // TODO: reduce copy-pasta from report()
     function dispute() {
         // Submit report to background/supabase
-        chrome.runtime.sendMessage({
-            command: Command.Report,
-            body: {
-                profileId: props.profileId,
-                type: reportType,
-                notes: notes,
-                confidence: confidence,
-                dispute: true
-            }
+        sendMessageToBackground(Command.Report, {
+            profileId: props.profileId,
+            type: reportType,
+            notes: notes,
+            confidence: confidence,
+            dispute: true
         });
 
         // TODO: what to do to UI in a dispute case?
@@ -58,16 +52,7 @@ export function ReportModal(props: ReportModalProps) {
 
     function watch() {
         // Submit report to background/supabase
-        chrome.runtime.sendMessage({
-            command: Command.Watch,
-            body: {
-                profileId: props.profileId,
-                // TODO: are the other parameters necessary?
-                type: reportType,
-                notes: notes,
-                confidence: confidence
-            }
-        });
+        sendMessageToBackground(Command.Watch, props.profileId);
 
         // Render blacklisted group profile links
         queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
@@ -76,6 +61,15 @@ export function ReportModal(props: ReportModalProps) {
         }), props.profileId);
 
         setNotes('');
+        props.close();
+    }
+
+    function deleteFromLocalBlacklist() {
+        sendMessageToBackground(Command.Delete, props.profileId);
+
+         // Clear blacklisted group profile links
+         queryProfileLinks((e) => clearProfileLink(e as HTMLAnchorElement), props.profileId);
+
         props.close();
     }
   
@@ -132,6 +126,10 @@ export function ReportModal(props: ReportModalProps) {
                         </HoverCard.Dropdown>
                     </HoverCard>
                 }
+
+                <Tooltip label="Delete profile from local blacklist.">
+                    <Button onClick={deleteFromLocalBlacklist}>Local Delete</Button>
+                </Tooltip>
 
                 {(props.upVotes || props.downVotes) &&
                     <div>

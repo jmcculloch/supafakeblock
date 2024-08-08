@@ -47,6 +47,7 @@ export enum Command {
     // extension->background
     Report = "REPORT",
     Watch = "WATCH",
+    Delete = "DELETE",
     IsBlacklisted = "IS_BLACKLISTED",
     BlacklistCount = "BLACKLIST_COUNT",
     GetUser = "GET_USER",

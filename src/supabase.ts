@@ -70,7 +70,7 @@ export class Supabase {
 
     public async isBlacklisted(profileId: number): Promise<ReportStats | null> {
         // Query local blacklist table
-        const result = await this.myCollection?.blacklist.findOne({
+        const result = await this.myCollection.blacklist.findOne({
             selector: {
                 id: profileId
             }
@@ -119,11 +119,19 @@ export class Supabase {
         return error;
     }
 
-    public async watch(report: Report): Promise<void> {
+    public async watch(profileId: number): Promise<void> {
         // TODO: Save state, keyed off report.profileId of other values to complete a report?
         this.myCollection.blacklist.insert({
-            id: report.profileId
+            id: profileId
         });
+    }
+
+    public async deleteFromLocalBlacklist(profileId: number): Promise<void> {
+        const result = await this.myCollection.blacklist.findOne({
+            selector: {
+                id: profileId
+            }
+        }).exec()?.remove();
     }
 
     public async getBlacklistCount(): Promise<number> {
@@ -134,7 +142,7 @@ export class Supabase {
      * Utility to delete the local indexeddb tables, which are not visible in Devtools
      */
     public static async deleteLocalBlacklist(): Promise<void> {
-       (await indexedDB.databases()).filter((db) => db.name?.startsWith('rxdb-dexie-blacklist')).forEach((db) => indexedDB.deleteDatabase(db.name!));
+        (await indexedDB.databases()).filter((db) => db.name?.startsWith('rxdb-dexie-blacklist')).forEach((db) => indexedDB.deleteDatabase(db.name!));
     }
 
     public async signIn(authenticatedCallback: (user: User) => void): Promise<void> {
