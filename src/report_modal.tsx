@@ -109,34 +109,38 @@ export function ReportModal(props: ReportModalProps) {
                     <Button onClick={report}>Report Profile</Button>
                 </Tooltip>
                 {props.upVotes > 0 ?
-                <HoverCard width="280">
-                    <HoverCard.Target>
-                        <Button onClick={dispute} variant="outline">Dispute Profile</Button>
-                    </HoverCard.Target>
-                    <HoverCard.Dropdown>
-                        <Text size="sm">
-                        Dispute the fact that this is a fraudulent profile.
-                        Please fill out the notes section with the reasons you believe this account should not be considered a fraudulent profile.
-                        </Text>
-                    </HoverCard.Dropdown>
-                </HoverCard>
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={dispute} variant="outline">Dispute Profile</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                            Dispute the fact that this is a fraudulent profile.
+                            Please fill out the notes section with the reasons you believe this account should not be considered a fraudulent profile.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
                 :
-                <HoverCard width="280">
-                    <HoverCard.Target>
-                        <Button onClick={watch} variant="outline">{emojiForReportType(ReportType.WATCH)} Watch Profile</Button>
-                    </HoverCard.Target>
-                    <HoverCard.Dropdown>
-                        <Text size="sm">
-                        Watch a potential fraudulent profile.
-                        </Text>
-                    </HoverCard.Dropdown>
-                </HoverCard>
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={watch} variant="outline">{emojiForReportType(ReportType.WATCH)} Watch Profile</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                            Watch a potential fraudulent profile.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
                 }
 
-                Profile Stats:
-                👍 {props.upVotes} &nbsp;
-                👎 {props.downVotes} &nbsp;
-                🎰 {props.avgConfidence}
+                {(props.upVotes || props.downVotes) &&
+                    <div>
+                        Profile Stats:
+                        👍 {props.upVotes} &nbsp;
+                        👎 {props.downVotes} &nbsp;
+                        🎰 {props.avgConfidence}
+                    </div>
+                }
             </Stack>
         </Modal>
     </>);
