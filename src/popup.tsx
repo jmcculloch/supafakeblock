@@ -7,6 +7,7 @@ import { Command, ReportType } from './types';
 import { User } from '@supabase/supabase-js';
 
 import '@mantine/core/styles.css';
+import { AnyMxRecord } from 'dns';
 
 interface PopupProps {
     blacklistCount: number
@@ -58,6 +59,7 @@ function Popup(props: PopupProps) {
                     <div className="sfb_SCAMMER">{emojiForReportType(ReportType.SCAMMER)} Scammer</div>
                     <div className="sfb_SPAMMER">{emojiForReportType(ReportType.SPAMMER)} Spammer</div>
                     <div className="sfb_FAKE_PROFILE">{emojiForReportType(ReportType.FAKE_PROFILE)} Fake Profile</div>
+                    <div className="sfb_WATCH">{emojiForReportType(ReportType.WATCH)} Watch</div>
                 </div>
             </Card.Section>
 
@@ -76,8 +78,8 @@ function PopupApp() {
     const [user, setUser] = useState<User>();
 
     useEffect(() => {
-       sendMessageToBackground(Command.BlacklistCount, null, (c) => setBlacklistCount(c));
-       sendMessageToBackground(Command.GetUser, null, (u) => setUser(u));
+       sendMessageToBackground<null, number>(Command.BlacklistCount, null, (c) => setBlacklistCount(c));
+       sendMessageToBackground<null, User>(Command.GetUser, null, (u) => setUser(u));
 
         return () => {
         };

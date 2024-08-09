@@ -14,6 +14,10 @@
     background-color: yellow !important;
 }
 
+.sfb_WATCH {
+    background-color: magenta !important;
+}
+
 .sfb_blacklisted_not_sure {
     opacity: 25%;
 }

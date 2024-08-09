@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
-import { Command, ReportConfidence, ReportType } from './types';
-import { blacklistProfileLink, emojiForReportType, queryProfileLinks } from './common';
+import { Command, ReportConfidence, Report, ReportType } from './types';
+import { blacklistProfileLink, clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
 import { useInputState } from '@mantine/hooks';
 
 /**
@@ -15,15 +15,12 @@ export function ReportModal(props: ReportModalProps) {
 
     function report() {
         // Submit report to background/supabase
-        chrome.runtime.sendMessage({
-            command: Command.Report,
-            body: {
-                profileId: props.profileId,
-                type: reportType,
-                notes: notes,
-                confidence: confidence,
-                dispute: false
-            }
+        sendMessageToBackground<Report, void>(Command.Report, {
+            profileId: props.profileId,
+            type: reportType,
+            notes: notes,
+            confidence: confidence,
+            dispute: false
         });
 
         // Render blacklisted group profile links
@@ -39,20 +36,40 @@ export function ReportModal(props: ReportModalProps) {
     // TODO: reduce copy-pasta from report()
     function dispute() {
         // Submit report to background/supabase
-        chrome.runtime.sendMessage({
-            command: Command.Report,
-            body: {
-                profileId: props.profileId,
-                type: reportType,
-                notes: notes,
-                confidence: confidence,
-                dispute: true
-            }
+        sendMessageToBackground<Report, void>(Command.Report, {
+            profileId: props.profileId,
+            type: reportType,
+            notes: notes,
+            confidence: confidence,
+            dispute: true
         });
 
         // TODO: what to do to UI in a dispute case?
 
         setNotes('');
+        props.close();
+    }
+
+    function watch() {
+        // Submit report to background/supabase
+        sendMessageToBackground<number, void>(Command.Watch, props.profileId);
+
+        // Render blacklisted group profile links
+        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
+            type: ReportType.WATCH,
+            avgConfidence: confidence,
+        }), props.profileId);
+
+        setNotes('');
+        props.close();
+    }
+
+    function deleteFromLocalBlacklist() {
+        sendMessageToBackground<number, void>(Command.Delete, props.profileId);
+
+         // Clear blacklisted group profile links
+         queryProfileLinks((e) => clearProfileLink(e as HTMLAnchorElement), props.profileId);
+
         props.close();
     }
   
@@ -85,22 +102,43 @@ export function ReportModal(props: ReportModalProps) {
                 <Tooltip label="Report this is a fraudulent profile.">
                     <Button onClick={report}>Report Profile</Button>
                 </Tooltip>
-                <HoverCard width="280">
-                    <HoverCard.Target>
-                        <Button onClick={dispute} variant="outline">Dispute Profile</Button>
-                    </HoverCard.Target>
-                    <HoverCard.Dropdown>
-                        <Text size="sm">
-                        Dispute the fact that this is a fraudulent profile.
-                        Please fill out the notes section with the reasons you believe this account should not be considered a fraudulent profile.
-                        </Text>
-                    </HoverCard.Dropdown>
-                </HoverCard>
+                {props.upVotes > 0 ?
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={dispute} variant="outline">Dispute Profile</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                            Dispute the fact that this is a fraudulent profile.
+                            Please fill out the notes section with the reasons you believe this account should not be considered a fraudulent profile.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
+                :
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={watch} variant="outline">{emojiForReportType(ReportType.WATCH)} Watch Profile</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                            Watch a potential fraudulent profile.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
+                }
 
-                Profile Stats:
-                👍 {props.upVotes} &nbsp;
-                👎 {props.downVotes} &nbsp;
-                🎰 {props.avgConfidence}
+                {/* <Tooltip label="Delete profile from local blacklist.">
+                    <Button onClick={deleteFromLocalBlacklist}>Local Delete</Button>
+                </Tooltip> */}
+
+                {(props.upVotes || props.downVotes) &&
+                    <div>
+                        Profile Stats:
+                        👍 {props.upVotes} &nbsp;
+                        👎 {props.downVotes} &nbsp;
+                        🎰 {props.avgConfidence}
+                    </div>
+                }
             </Stack>
         </Modal>
     </>);

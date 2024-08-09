@@ -55,12 +55,13 @@ export class Supabase {
         const replication = new SupabaseReplication({
             supabaseClient: this.instance.supabaseClient,
             collection: this.instance.myCollection.blacklist,
-            // TODO: I do not believe we need suffix this
             replicationIdentifier: "myId" + SUPABASE_URL,
             pull: {
                 realtimePostgresChanges: true
             },
-            push: {},
+            // NOTE: A null push entry disables pushes from writes to local table
+            // This is necessary for watch functionality
+            // push: {},
             autoStart: true,
         });
 
@@ -68,35 +69,39 @@ export class Supabase {
     }
 
     public async isBlacklisted(profileId: number): Promise<ReportStats | null> {
-        const result = await this.myCollection?.blacklist.findOne({
+        // Query local blacklist table
+        const result = await this.myCollection.blacklist.findOne({
             selector: {
                 id: profileId
             }
         }).exec();
 
-        if(result != null) {
-            // TODO: cache?
-            return await this.getReportStats(profileId);
+        // No entry in local blacklist
+        if(!result) {
+            return null;
         }
 
-        // TODO: what to return if not found?
-        return null;
+        // TODO: cache?
+        const stats = await this.getReportStats(profileId);
+
+        // TODO: avgConfidence?, string/number?
+        // If null, this is a local "WATCH" status that doesn't have a report logged against it, inject here
+        return stats ? stats : { type: ReportType.WATCH, avgConfidence: '1.00' };
     }
 
-    public async getReportStats(profileId: number): Promise<ReportStats> {
+    public async getReportStats(profileId: number): Promise<ReportStats | null> {
         const { data, error } = await this.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
 
         if(error) {
             console.log(`Error: `, error);
         }
 
-        // TODO: rethink null/default values ?
-        return {
-            type: data[0]?.type ?? ReportType.UNKNOWN,
-            upVotes: data[0]?.up_votes ?? 0,
-            downVotes: data[0]?.down_votes ?? 0 ,
-            avgConfidence: data[0]?.avg_confidence.toFixed(2) ?? '0.00'
-        }
+        return data[0] ? {
+            type: data[0].type,
+            upVotes: data[0].up_votes,
+            downVotes: data[0].down_votes,
+            avgConfidence: data[0].avg_confidence.toFixed(2) ?? '0.00'
+        } : null;
     }
 
     // TODO: throws Error?
@@ -114,6 +119,21 @@ export class Supabase {
         return error;
     }
 
+    public async watch(profileId: number): Promise<void> {
+        // TODO: Save state, keyed off report.profileId of other values to complete a report?
+        this.myCollection.blacklist.insert({
+            id: profileId
+        });
+    }
+
+    public async deleteFromLocalBlacklist(profileId: number): Promise<void> {
+        const result = await this.myCollection.blacklist.findOne({
+            selector: {
+                id: profileId
+            }
+        }).exec()?.remove();
+    }
+
     public async getBlacklistCount(): Promise<number> {
         return await this.myCollection.blacklist.count().exec();
     }
@@ -121,13 +141,8 @@ export class Supabase {
     /**
      * Utility to delete the local indexeddb tables, which are not visible in Devtools
      */
-    public static deleteLocalBlacklist(): void {
-        [
-            'rxdb-dexie-blacklist--0--_rxdb_internal',
-            'rxdb-dexie-blacklist--0--blacklist',
-            // TODO: I do not believe we need suffix this
-            'rxdb-dexie-blacklist--0--blacklist-rx-replication-myIdhttps://vknwqxfqzcusbhjjkeoo.supabase.co'
-        ].forEach((name) => indexedDB.deleteDatabase(name));
+    public static async deleteLocalBlacklist(): Promise<void> {
+        (await indexedDB.databases()).filter((db) => db.name?.startsWith('rxdb-dexie-blacklist')).forEach((db) => indexedDB.deleteDatabase(db.name!));
     }
 
     public async signIn(authenticatedCallback: (user: User) => void): Promise<void> {
