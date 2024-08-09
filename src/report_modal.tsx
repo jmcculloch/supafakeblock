@@ -127,9 +127,9 @@ export function ReportModal(props: ReportModalProps) {
                     </HoverCard>
                 }
 
-                <Tooltip label="Delete profile from local blacklist.">
+                {/* <Tooltip label="Delete profile from local blacklist.">
                     <Button onClick={deleteFromLocalBlacklist}>Local Delete</Button>
-                </Tooltip>
+                </Tooltip> */}
 
                 {(props.upVotes || props.downVotes) &&
                     <div>
