@@ -18,7 +18,7 @@ export enum ReportConfidence {
 export interface Report {
     profileId: number,
     type: string,
-    confidence: number,
+    confidence: string,
     notes?: string,
     dispute?: boolean,
 }

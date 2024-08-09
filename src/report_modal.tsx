@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
-import { Command, ReportConfidence, ReportType } from './types';
+import { Command, ReportConfidence, Report, ReportType } from './types';
 import { blacklistProfileLink, clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
 import { useInputState } from '@mantine/hooks';
 
@@ -15,7 +15,7 @@ export function ReportModal(props: ReportModalProps) {
 
     function report() {
         // Submit report to background/supabase
-        sendMessageToBackground(Command.Report, {
+        sendMessageToBackground<Report, void>(Command.Report, {
             profileId: props.profileId,
             type: reportType,
             notes: notes,
@@ -36,7 +36,7 @@ export function ReportModal(props: ReportModalProps) {
     // TODO: reduce copy-pasta from report()
     function dispute() {
         // Submit report to background/supabase
-        sendMessageToBackground(Command.Report, {
+        sendMessageToBackground<Report, void>(Command.Report, {
             profileId: props.profileId,
             type: reportType,
             notes: notes,
@@ -52,7 +52,7 @@ export function ReportModal(props: ReportModalProps) {
 
     function watch() {
         // Submit report to background/supabase
-        sendMessageToBackground(Command.Watch, props.profileId);
+        sendMessageToBackground<number, void>(Command.Watch, props.profileId);
 
         // Render blacklisted group profile links
         queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
@@ -65,7 +65,7 @@ export function ReportModal(props: ReportModalProps) {
     }
 
     function deleteFromLocalBlacklist() {
-        sendMessageToBackground(Command.Delete, props.profileId);
+        sendMessageToBackground<number, void>(Command.Delete, props.profileId);
 
          // Clear blacklisted group profile links
          queryProfileLinks((e) => clearProfileLink(e as HTMLAnchorElement), props.profileId);

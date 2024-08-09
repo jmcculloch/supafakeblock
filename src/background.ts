@@ -92,7 +92,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     const error = await supabase.report(request.body as any);
                     if(error) {
                         console.log(`Error: `, error);
-                        errorNotification(error.name, error.message, sender.tab);
+                        errorNotification(error.message, error.name, sender.tab);
                     }
                     break;
                 case Command.Watch:

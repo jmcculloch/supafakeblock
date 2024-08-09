@@ -2,6 +2,7 @@
 
 import { createTheme } from "@mantine/core";
 import { Command, ReportStats, ReportType } from "./types";
+import { NotificationData } from "@mantine/notifications";
 
 export const theme = createTheme({
     primaryColor: 'red'
@@ -145,7 +146,7 @@ function confidenceToString(confidence: number): string {
  * @param command
  * @param body?
  */
-export function sendMessageToBackground<R = any>(command: Command, body?: any, responseCallback?: (response: R) => void): void {
+export function sendMessageToBackground<B, R>(command: Command, body?: B, responseCallback?: (response: R) => void): void {
     if(responseCallback) {
         chrome.runtime.sendMessage({
             command: command,
@@ -167,7 +168,7 @@ export function sendMessageToBackground<R = any>(command: Command, body?: any, r
  * @param body?
  * @param tab?
  */
-export async function sendMessageToActiveTab(command: Command, body?: any, tab?: chrome.tabs.Tab): Promise<void> {
+export async function sendMessageToActiveTab<B>(command: Command, body?: B, tab?: chrome.tabs.Tab): Promise<void> {
     tab ??= (await chrome.tabs.query({ active: true }))[0];
 
     if(tab?.id) {
@@ -178,14 +179,14 @@ export async function sendMessageToActiveTab(command: Command, body?: any, tab?:
     }
 }
 
-export async function notification(title: string, message?: string, isError: boolean = false, tab?: chrome.tabs.Tab): Promise<void> {
-    sendMessageToActiveTab(Command.Notification, {
+export async function notification(message: string, title?: string, isError: boolean = false, tab?: chrome.tabs.Tab): Promise<void> {
+    sendMessageToActiveTab<NotificationData>(Command.Notification, {
         title: title,
-        ...(message && { message: message }),
+        message: message,
         ...(isError && { color: 'red' })
     }, tab);
 }
 
-export async function errorNotification(title: string, message?: string, tab?: chrome.tabs.Tab): Promise<void> {
-    notification(title, message, true, tab);
+export async function errorNotification(message: string, title?: string, tab?: chrome.tabs.Tab): Promise<void> {
+    notification(message, title, true, tab);
 }

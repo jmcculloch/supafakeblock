@@ -7,6 +7,7 @@ import { Command, ReportType } from './types';
 import { User } from '@supabase/supabase-js';
 
 import '@mantine/core/styles.css';
+import { AnyMxRecord } from 'dns';
 
 interface PopupProps {
     blacklistCount: number
@@ -77,8 +78,8 @@ function PopupApp() {
     const [user, setUser] = useState<User>();
 
     useEffect(() => {
-       sendMessageToBackground(Command.BlacklistCount, null, (c) => setBlacklistCount(c));
-       sendMessageToBackground(Command.GetUser, null, (u) => setUser(u));
+       sendMessageToBackground<null, number>(Command.BlacklistCount, null, (c) => setBlacklistCount(c));
+       sendMessageToBackground<null, User>(Command.GetUser, null, (u) => setUser(u));
 
         return () => {
         };
