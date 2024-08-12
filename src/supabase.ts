@@ -6,6 +6,7 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 //@ts-ignore
 import { SupabaseReplication } from 'rxdb-supabase';
 import { Report, ReportStats, ReportType } from './types';
+const TTLCache = require('@isaacs/ttlcache');
 
 // TODO: configurable?
 const SUPABASE_URL = 'https://vknwqxfqzcusbhjjkeoo.supabase.co';
@@ -30,6 +31,7 @@ export class Supabase {
     private myCollection: any;
     private static instance : Supabase;
     public supabaseClient: SupabaseClient;
+    private cache = new TTLCache({ttl: 15*60*1000});
 
     constructor() {
         this.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -90,18 +92,27 @@ export class Supabase {
     }
 
     public async getReportStats(profileId: number): Promise<ReportStats | null> {
+        const cached = await this.cache.get(profileId);
+        if(cached) {
+            return cached;
+        }
+
         const { data, error } = await this.supabaseClient.from('report_stats_view').select().eq('blacklist_id', profileId);
 
         if(error) {
             console.log(`Error: `, error);
         }
 
-        return data[0] ? {
+        const reportStats = data[0] ? {
             type: data[0].type,
             upVotes: data[0].up_votes,
             downVotes: data[0].down_votes,
             avgConfidence: data[0].avg_confidence.toFixed(2) ?? '0.00'
         } : null;
+
+        this.cache.set(profileId, reportStats);
+
+        return reportStats;
     }
 
     // TODO: throws Error?
@@ -114,6 +125,8 @@ export class Supabase {
             type: report.type,
             vote: !report.dispute ?? true
         });
+
+        this.cache.remove(report.profileId);
 
         // TODO: rethink void|Error
         return error;
