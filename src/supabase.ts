@@ -31,7 +31,8 @@ export class Supabase {
     private myCollection: any;
     private static instance : Supabase;
     public supabaseClient: SupabaseClient;
-    private cache = new TTLCache({ttl: 15*60*1000});
+    private reportStatsCache = new TTLCache({ttl: 15*60*1000});
+    private reportsCache = new TTLCache({ttl: 15*60*1000});
 
     constructor() {
         this.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -92,7 +93,7 @@ export class Supabase {
     }
 
     public async getReportStats(profileId: number): Promise<ReportStats | null> {
-        const cached = await this.cache.get(profileId);
+        const cached = await this.reportStatsCache.get(profileId);
         if(cached) {
             return cached;
         }
@@ -107,10 +108,12 @@ export class Supabase {
             type: data[0].type,
             upVotes: data[0].up_votes,
             downVotes: data[0].down_votes,
-            avgConfidence: data[0].avg_confidence.toFixed(2) ?? '0.00'
+            avgConfidence: (data[0].avg_confidence ?? 0).toLocaleString(undefined, { style: 'percent'})
         } : null;
 
-        this.cache.set(profileId, reportStats);
+        if(reportStats) {
+            this.reportStatsCache.set(profileId, reportStats);
+        }
 
         return reportStats;
     }
@@ -126,10 +129,40 @@ export class Supabase {
             vote: !report.dispute ?? true
         });
 
-        this.cache.remove(report.profileId);
+        this.reportStatsCache.remove(report.profileId);
 
         // TODO: rethink void|Error
         return error;
+    }
+
+    public async getReports(profileId: number): Promise<Report[]> {
+        const cached = await this.reportsCache.get(profileId);
+        if(cached) {
+            return cached;
+        }
+
+        const { data, error } = await this.supabaseClient.from('report').select().eq('blacklist_id', profileId);
+
+        if(error) {
+            console.log(`Error: `, error);
+        }
+
+        const reports: Report[] = data.map((report: any) => {
+            return {
+                type: report['type'],
+                notes: report['notes'],
+                dispute: !report['vote'],
+                // TODO: i18n here or on display?
+                createdAt: new Date(report['created_at']).toLocaleDateString(),
+                confidence: (report['confidence'] ?? 0).toLocaleString(undefined, { style: 'percent' })
+            }
+        });
+
+        if(reports && reports.length > 0) {
+            this.reportsCache.set(profileId, reports);
+        }
+
+        return reports;
     }
 
     public async watch(profileId: number): Promise<void> {

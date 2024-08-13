@@ -3,12 +3,14 @@ import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
 import { Command, ReportConfidence, Report, ReportType } from './types';
 import { blacklistProfileLink, clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
-import { useInputState } from '@mantine/hooks';
+import { useDisclosure, useInputState } from '@mantine/hooks';
+import { ReportsModal } from './reports_modal';
 
 /**
  *
  */
 export function ReportModal(props: ReportModalProps) {
+    const [reportsOpened, reportsHandlers] = useDisclosure(false);
     const [notes, setNotes] = useInputState<string>('');
     const [reportType, setReportType] = useState<string>(ReportType.SCAMMER);
     const [confidence, setConfidence] = useInputState<string>(ReportConfidence.PROBABLY);
@@ -72,8 +74,13 @@ export function ReportModal(props: ReportModalProps) {
 
         props.close();
     }
+
+    function showReports() {
+        reportsHandlers.open();
+    }
   
     return (<>
+        <ReportsModal opened={reportsOpened} close={reportsHandlers.close} reports={props.reports}/>
         <Modal opened={props.opened} onClose={props.close} title="Report Profile" centered>
             <Stack align="stretch" justify="center" gap="md">
 
@@ -100,12 +107,13 @@ export function ReportModal(props: ReportModalProps) {
                     data-autofocus />
 
                 <Tooltip label="Report this is a fraudulent profile.">
-                    <Button onClick={report}>Report Profile</Button>
+                    <Button onClick={report}>🏴‍☠️ Report Profile</Button>
                 </Tooltip>
                 {props.upVotes > 0 ?
+                    <>
                     <HoverCard width="280">
                         <HoverCard.Target>
-                            <Button onClick={dispute} variant="outline">Dispute Profile</Button>
+                            <Button onClick={dispute} variant="outline">🙅 Dispute Profile</Button>
                         </HoverCard.Target>
                         <HoverCard.Dropdown>
                             <Text size="sm">
@@ -114,6 +122,18 @@ export function ReportModal(props: ReportModalProps) {
                             </Text>
                         </HoverCard.Dropdown>
                     </HoverCard>
+
+                    <HoverCard width="280">
+                        <HoverCard.Target>
+                            <Button onClick={showReports} variant="outline">📝 See Previous Reports</Button>
+                        </HoverCard.Target>
+                        <HoverCard.Dropdown>
+                            <Text size="sm">
+                           See previous reports.
+                            </Text>
+                        </HoverCard.Dropdown>
+                    </HoverCard>
+                    </>
                 :
                     <HoverCard width="280">
                         <HoverCard.Target>
@@ -151,5 +171,6 @@ interface ReportModalProps {
     upVotes: number;
     downVotes: number;
     avgConfidence: number;
+    reports: Report[];
 }
   

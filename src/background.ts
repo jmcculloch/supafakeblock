@@ -169,7 +169,8 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     (async () => {
                         const response = {
                             profileId: profileId,
-                            ...(await supabase.getReportStats(profileId!))
+                            ...(await supabase.getReportStats(profileId!)),
+                            reports: (await supabase.getReports(profileId!))
                         };
 
                         chrome.tabs.sendMessage(tab.id!, {
