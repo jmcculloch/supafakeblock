@@ -5,6 +5,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { SignInModal } from './sign_in_modal';
 import { detection } from './detection';
+import { Report } from './types';
 
 /**
  *
@@ -17,6 +18,7 @@ export function App() {
     const [upVotes, setUpVotes] = useState<number>(0);
     const [downVotes, setDownVotes] = useState<number>(0);
     const [avgConfidence, setAvgConfidence] = useState<number>(0);
+    const [reports, setReports] = useState<Report[]>();
 
     function onMessageCallback(request: Message, sender: chrome.runtime.MessageSender, sendResponse?: any) {
         // TODO: remove console log
@@ -57,6 +59,7 @@ export function App() {
         setUpVotes(promptRequest.upVotes);
         setDownVotes(promptRequest.downVotes);
         setAvgConfidence(promptRequest.avgConfidence);
+        setReports(promptRequest.reports);
 
         reportHandlers.open();
     }
@@ -67,7 +70,7 @@ export function App() {
 
     // TODO: rather than setting notes blank here, do it in ReportModal?
     return (<>
-        <ReportModal opened={reportOpened} close={reportHandlers.close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} />
+        <ReportModal opened={reportOpened} close={reportHandlers.close} profileId={profileId} upVotes={upVotes} downVotes={downVotes} avgConfidence={avgConfidence} reports={reports || []} />
         <SignInModal opened={signInOpened} close={signInHandlers.close} />
     </>);
 }

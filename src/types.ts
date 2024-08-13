@@ -21,13 +21,16 @@ export interface Report {
     confidence: string,
     notes?: string,
     dispute?: boolean,
+    // TODO: having de/serialization issues with Date, using string for now
+    createdAt?: string,
 }
 
 export interface PromptRequest {
     profileId: number,
     upVotes: number,
     downVotes: number,
-    avgConfidence: number
+    avgConfidence: number,
+    reports?: Report[]
 }
 
 // TODO: number/string types, and this is getting overloaded, e.g. optional up/down votes
