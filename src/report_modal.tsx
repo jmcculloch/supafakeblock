@@ -28,7 +28,7 @@ export function ReportModal(props: ReportModalProps) {
         // Render blacklisted group profile links
         queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
             type: reportType,
-            avgConfidence: confidence,
+            avgConfidence: parseFloat(confidence),
         }), props.profileId);
 
         setNotes('');
@@ -59,7 +59,7 @@ export function ReportModal(props: ReportModalProps) {
         // Render blacklisted group profile links
         queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
             type: ReportType.WATCH,
-            avgConfidence: confidence,
+            avgConfidence: parseFloat(confidence),
         }), props.profileId);
 
         setNotes('');
@@ -156,7 +156,7 @@ export function ReportModal(props: ReportModalProps) {
                         Profile Stats:
                         👍 {props.upVotes} &nbsp;
                         👎 {props.downVotes} &nbsp;
-                        🎰 {props.avgConfidence}
+                        🎰 {props.avgConfidence.toLocaleString(undefined, { style: 'percent'})}
                     </div>
                 }
             </Stack>

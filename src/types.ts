@@ -38,7 +38,7 @@ export interface ReportStats {
     type: string,
     upVotes?: number,
     downVotes?: number,
-    avgConfidence: string
+    avgConfidence: number
 }
 
 export enum Command {
