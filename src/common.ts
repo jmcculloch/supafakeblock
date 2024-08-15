@@ -2,6 +2,7 @@
 
 import { createTheme } from "@mantine/core";
 import { Command, ReportStats, ReportType } from "./types";
+import { imageToMD5 } from "./image";
 import { NotificationData } from "@mantine/notifications";
 
 export const theme = createTheme({
@@ -57,6 +58,14 @@ export function queryProfileLinks(callback: (e: HTMLAnchorElement) => void, prof
     });
 }
 
+export async function queryImages(callback: (e: HTMLImageElement) => void): Promise<void> {
+    document.querySelectorAll('a[href^="https://www.facebook.com/photo/"] img').forEach(async (e: Element) => {
+        const img = e as HTMLImageElement;
+        const md5 = await imageToMD5(img);
+        console.log(`md5: `, img.src, md5);
+    });
+}
+
 /**
  * Query selectors can only do so much, this function will evaluate an Element
  * and exclude known links
@@ -74,7 +83,7 @@ function includeElement(e: HTMLAnchorElement): boolean {
  * TODO: rename?
  * TODO: document
  */
-export function updateProfileLinks(): void {
+export async function updateProfileLinks(): Promise<void> {
     queryProfileLinks(async (profileLink: HTMLAnchorElement) => {
         const profileId = profileIdFromUrl(profileLink.href);
 
@@ -85,6 +94,8 @@ export function updateProfileLinks(): void {
             isBlacklisted(profileId, profileLink, blacklistProfileLink);
         }
     });
+
+    queryImages(()=>{});
 }
 
 export function markAsEvaluated(e: Element) {
