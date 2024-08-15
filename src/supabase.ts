@@ -89,7 +89,7 @@ export class Supabase {
 
         // TODO: avgConfidence?, string/number?
         // If null, this is a local "WATCH" status that doesn't have a report logged against it, inject here
-        return stats ? stats : { type: ReportType.WATCH, avgConfidence: '1.00' };
+        return stats ? stats : { type: ReportType.WATCH, avgConfidence: 1.00 };
     }
 
     public async getReportStats(profileId: number): Promise<ReportStats | null> {
@@ -108,7 +108,7 @@ export class Supabase {
             type: data[0].type,
             upVotes: data[0].up_votes,
             downVotes: data[0].down_votes,
-            avgConfidence: (data[0].avg_confidence ?? 0).toLocaleString(undefined, { style: 'percent'})
+            avgConfidence: data[0].avg_confidence ?? 0
         } : null;
 
         if(reportStats) {

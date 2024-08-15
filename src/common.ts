@@ -112,7 +112,7 @@ export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats
     );
 
     if(reportStats.type != ReportType.WATCH) {
-        profileLink.classList.add('sfb_blacklisted', `sfb_blacklisted_${confidenceToString(parseFloat(reportStats.avgConfidence))}`);
+        profileLink.classList.add('sfb_blacklisted', `sfb_blacklisted_${confidenceToString(reportStats.avgConfidence)}`);
     }
 }
 
