@@ -33,12 +33,12 @@ export interface PromptRequest {
     reports?: Report[]
 }
 
-// TODO: number/string types, and this is getting overloaded, e.g. optional up/down votes
+// TODO: this is getting overloaded, e.g. optional up/down votes
 export interface ReportStats {
     type: string,
     upVotes?: number,
     downVotes?: number,
-    avgConfidence: string
+    avgConfidence: number
 }
 
 export enum Command {
