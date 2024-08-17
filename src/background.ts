@@ -106,12 +106,12 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                         console.log(`Error: `, error);
                         errorNotification(error.message, error.name, sender.tab);
                     }
-                    sendMessageToActiveTab<Report>(Command.UpdateProfile, report);
+                    sendMessageToActiveTab<Report>(Command.UpdateProfile, report, sender.tab);
                     break;
                 case Command.Watch:
                     const watchReport = (request.body as unknown) as Report;
                     supabase.watch(watchReport.profileId);
-                    sendMessageToActiveTab<Report>(Command.UpdateProfile, watchReport);
+                    sendMessageToActiveTab<Report>(Command.UpdateProfile, watchReport, sender.tab);
                     break;
                 case Command.Delete:
                     supabase.deleteFromLocalBlacklist(request.body as number);
@@ -199,7 +199,7 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                         profileId: profileId!,
                         type: ReportType.WATCH,
                         confidence: '1.0'
-                    });
+                    }, tab);
                     break;
                 case 'detection':
                     sendMessageToActiveTab(Command.Detection, null, tab);
