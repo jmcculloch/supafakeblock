@@ -129,7 +129,8 @@ export class Supabase {
             vote: !report.dispute ?? true
         });
 
-        this.reportStatsCache.remove(report.profileId);
+        this.reportStatsCache.delete(report.profileId);
+        this.reportsCache.delete(report.profileId);
 
         // TODO: rethink void|Error
         return error;

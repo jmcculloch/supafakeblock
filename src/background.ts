@@ -1,6 +1,6 @@
 import { Supabase } from './supabase';
 import { errorNotification, notification, profileIdFromUrl, sendMessageToActiveTab } from './common';
-import { Command, Message } from './types';
+import { Command, Message, Report, ReportType } from './types';
 import { User } from '@supabase/supabase-js';
 
 'use strict';
@@ -37,6 +37,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
         title: 'Report',
         contexts: ['link'],
         id: 'report',
+        targetUrlPatterns: [
+            'https://www.facebook.com/groups/*/user/*',
+            'https://www.facebook.com/profile.php?id=*'
+            // TODO: how to register a pattern to support account nicknames, e.g. https://www.facebook.com/nickname/?
+        ]
+    });
+
+    // TODO: doc
+    chrome.contextMenus.create({
+        title: 'Watch',
+        contexts: ['link'],
+        id: 'watch',
         targetUrlPatterns: [
             'https://www.facebook.com/groups/*/user/*',
             'https://www.facebook.com/profile.php?id=*'
@@ -88,16 +100,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
             switch((request as Message).command) {
                 case Command.Report:
                     // Update database
-                    // TODO: fix typing on structured Message request
-                    const error = await supabase.report(request.body as any);
+                    const report = (request.body as unknown) as Report;
+                    const error = await supabase.report(report);
                     if(error) {
                         console.log(`Error: `, error);
                         errorNotification(error.message, error.name, sender.tab);
                     }
+                    sendMessageToActiveTab<Report>(Command.UpdateProfile, report);
                     break;
                 case Command.Watch:
-                    // TODO: fix typing on structured Message request
-                    supabase.watch(request.body as any);
+                    const watchReport = (request.body as unknown) as Report;
+                    supabase.watch(watchReport.profileId);
+                    sendMessageToActiveTab<Report>(Command.UpdateProfile, watchReport);
                     break;
                 case Command.Delete:
                     supabase.deleteFromLocalBlacklist(request.body as number);
@@ -178,6 +192,14 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                             body: response
                         });
                     })();
+                    break;
+                case 'watch':
+                    supabase.watch(profileId!);
+                    sendMessageToActiveTab<Report>(Command.UpdateProfile, {
+                        profileId: profileId!,
+                        type: ReportType.WATCH,
+                        confidence: '1.0'
+                    });
                     break;
                 case 'detection':
                     sendMessageToActiveTab(Command.Detection, null, tab);

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { HoverCard, Tooltip, Text, RadioGroup, Radio } from '@mantine/core';
 import { Modal, Button, Textarea, Stack } from '@mantine/core';
 import { Command, ReportConfidence, Report, ReportType } from './types';
-import { blacklistProfileLink, clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
+import { clearProfileLink, emojiForReportType, queryProfileLinks, sendMessageToBackground } from './common';
 import { useDisclosure, useInputState } from '@mantine/hooks';
 import { ReportsModal } from './reports_modal';
 
@@ -24,12 +24,6 @@ export function ReportModal(props: ReportModalProps) {
             confidence: confidence,
             dispute: false
         });
-
-        // Render blacklisted group profile links
-        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
-            type: reportType,
-            avgConfidence: parseFloat(confidence),
-        }), props.profileId);
 
         setNotes('');
         props.close();
@@ -54,13 +48,11 @@ export function ReportModal(props: ReportModalProps) {
 
     function watch() {
         // Submit report to background/supabase
-        sendMessageToBackground<number, void>(Command.Watch, props.profileId);
-
-        // Render blacklisted group profile links
-        queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
+        sendMessageToBackground<Report, void>(Command.Watch, {
+            profileId: props.profileId,
             type: ReportType.WATCH,
-            avgConfidence: parseFloat(confidence),
-        }), props.profileId);
+            confidence: '1.0'
+        });
 
         setNotes('');
         props.close();
@@ -70,6 +62,7 @@ export function ReportModal(props: ReportModalProps) {
         sendMessageToBackground<number, void>(Command.Delete, props.profileId);
 
          // Clear blacklisted group profile links
+         // TODO: have this handled by UpdateProfile and not UI
          queryProfileLinks((e) => clearProfileLink(e as HTMLAnchorElement), props.profileId);
 
         props.close();

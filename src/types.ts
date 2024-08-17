@@ -18,6 +18,7 @@ export enum ReportConfidence {
 export interface Report {
     profileId: number,
     type: string,
+    // TODO: number (string used for ease of mantine/react form input or floating point precision?)
     confidence: string,
     notes?: string,
     dispute?: boolean,
@@ -47,6 +48,7 @@ export enum Command {
     Notification = "NOTIFICATION",
     SignInRequired = "SIGN_IN_REQUIRED",
     Detection = "DETECTION",
+    UpdateProfile = "UPDATE_PROFILE",
     // extension->background
     Report = "REPORT",
     Watch = "WATCH",
