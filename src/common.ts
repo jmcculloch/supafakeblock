@@ -179,6 +179,7 @@ export async function sendMessageToActiveTab<B>(command: Command, body?: B, tab?
     }
 }
 
+// TODO: simplify notification call(s) below with (await chrome.tabs.query({ active: true }))[0]; ?
 export async function notification(message: string, title?: string, isError: boolean = false, tab?: chrome.tabs.Tab): Promise<void> {
     sendMessageToActiveTab<NotificationData>(Command.Notification, {
         title: title,

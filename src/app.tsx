@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { SignInModal } from './sign_in_modal';
 import { detection } from './detection';
 import { Report } from './types';
+import { blacklistProfileLink, queryProfileLinks } from './common';
 
 /**
  *
@@ -36,6 +37,14 @@ export function App() {
                 break;
             case Command.Detection:
                 detection();
+                break;
+            case Command.UpdateProfile:
+                const report = request.body as Report;
+                // Render blacklisted group profile links
+                queryProfileLinks((e) => blacklistProfileLink(e as HTMLAnchorElement, {
+                    type: report.type,
+                    avgConfidence: parseFloat(report.confidence),
+                }), report.profileId);
                 break;
             default:
                 console.log(`Received unknown command: `, request.command);
