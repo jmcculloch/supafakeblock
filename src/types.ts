@@ -45,9 +45,11 @@ export interface ReportStats {
 export enum Command {
     // background->extension
     Prompt = "PROMPT",
+    PromptPage = "PROMPT_PAGE",
     Notification = "NOTIFICATION",
     SignInRequired = "SIGN_IN_REQUIRED",
     Detection = "DETECTION",
+    // TODO: rename?
     UpdateProfile = "UPDATE_PROFILE",
     // extension->background
     Report = "REPORT",
@@ -55,6 +57,7 @@ export enum Command {
     Delete = "DELETE",
     IsBlacklisted = "IS_BLACKLISTED",
     BlacklistCount = "BLACKLIST_COUNT",
+    GetPromptRequest = "GET_PROMPT_REQUEST",
     GetUser = "GET_USER",
     SignIn = "SIGN_IN",
     SignOut = "SIGN_OUT"
