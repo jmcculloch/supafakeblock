@@ -13,7 +13,7 @@ export function ReportModal(props: ReportModalProps) {
     const [reportsOpened, reportsHandlers] = useDisclosure(false);
     const [notes, setNotes] = useInputState<string>('');
     const [reportType, setReportType] = useState<string>(ReportType.SCAMMER);
-    const [confidence, setConfidence] = useInputState<string>(ReportConfidence.PROBABLY);
+    const [confidence, setConfidence] = useInputState<string>(ReportConfidence.ABSOLUTELY);
 
     function report() {
         // Submit report to background/supabase
