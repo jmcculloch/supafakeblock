@@ -1,6 +1,6 @@
 import { Supabase } from './supabase';
 import { errorNotification, notification, profileIdFromUrl, sendMessageToActiveTab } from './common';
-import { Command, Message, Report, ReportType } from './types';
+import { Command, Message, PromptRequest, Report, ReportType } from './types';
 import { User } from '@supabase/supabase-js';
 
 'use strict';
@@ -133,6 +133,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                     break;
                 case Command.BlacklistCount:
                     sendResponse(await supabase.getBlacklistCount());
+                    break;
+                case Command.GetPromptRequest:
+                    const profileId = (request.body as number);
+                    const reportStats = await supabase.getReportStats(profileId);
+                    const reoprts = await supabase.getReports(profileId);
+                    sendResponse({
+                        profileId: profileId,
+                        upVotes: reportStats?.upVotes,
+                        downVotes: reportStats?.downVotes,
+                        avgConfidence: reportStats?.avgConfidence,
+                        reports: reoprts
+                    } as PromptRequest);
                     break;
                 case Command.GetUser:
                     sendResponse(user);

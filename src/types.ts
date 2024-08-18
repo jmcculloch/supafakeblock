@@ -57,6 +57,7 @@ export enum Command {
     Delete = "DELETE",
     IsBlacklisted = "IS_BLACKLISTED",
     BlacklistCount = "BLACKLIST_COUNT",
+    GetPromptRequest = "GET_PROMPT_REQUEST",
     GetUser = "GET_USER",
     SignIn = "SIGN_IN",
     SignOut = "SIGN_OUT"

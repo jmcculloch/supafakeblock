@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { SignInModal } from './sign_in_modal';
 import { detection } from './detection';
 import { Report } from './types';
-import { blacklistProfileLink, profileIdFromPage, queryProfileLinks } from './common';
+import { blacklistProfileLink, profileIdFromPage, queryProfileLinks, sendMessageToBackground } from './common';
 
 /**
  *
@@ -32,12 +32,8 @@ export function App() {
             case Command.PromptPage:
                 const profileId = profileIdFromPage();
                 if(profileId) {
-                    showReportModal({
-                        profileId: profileId,
-                        // TODO: hack, getReportStats, getReports?
-                        upVotes: 0,
-                        downVotes: 0,
-                        avgConfidence: 0
+                    const promptRequest = sendMessageToBackground<number, PromptRequest>(Command.GetPromptRequest, profileId, (promptRequest) => {
+                        showReportModal(promptRequest);
                     });
                 }
                 else {
