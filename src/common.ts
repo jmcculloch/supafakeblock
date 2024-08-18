@@ -14,6 +14,8 @@ const GROUP_PROFILE_LINK_REGEX = /.*\/groups\/\d+\/user\/(\d+)\//;
 // prevents links from popup cards, etc
 const PROFILE_LINK_REGEX = /.*\/profile.php\?id=(\d+)/;
 
+const PROFILE_ID_FROM_PHOTO_REGEX = /.*set=\D+(\d+)/;
+
 /**
  * TODO:
  * @param url
@@ -29,6 +31,30 @@ export function profileIdFromUrl(url: string): number | null {
             return parseInt(matches[1]);
         }
     }
+
+    return null;
+}
+
+/**
+ * Attempts to determine profile ID from current page
+ *
+ * @returns the profile ID or null
+ */
+export function profileIdFromPage(): number | null {
+    const fromLocationHref = window.location.href.match(PROFILE_LINK_REGEX);
+    if(fromLocationHref) {
+        console.log(`from window.location.href: `, fromLocationHref[1]);
+        return parseInt(fromLocationHref[1]);
+    }
+
+    const fromPhotos = (document.querySelector('a[href^="/photo/?fbid="]') as HTMLAnchorElement)?.href.match(PROFILE_ID_FROM_PHOTO_REGEX);
+    if(fromPhotos) {
+        console.log(`from photo: `, fromPhotos[1]);
+        return parseInt(fromPhotos[1]);
+    }
+
+    // TODO: from document.querySelectorAll('script[type="application/json"]')
+    // const SCRIPT_MEMBER_ID_REGEX = /.*\"member_id\"\:\s*\"(\d+)\"/;
 
     return null;
 }

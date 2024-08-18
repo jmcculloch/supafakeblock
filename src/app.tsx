@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { SignInModal } from './sign_in_modal';
 import { detection } from './detection';
 import { Report } from './types';
-import { blacklistProfileLink, queryProfileLinks } from './common';
+import { blacklistProfileLink, profileIdFromPage, queryProfileLinks } from './common';
 
 /**
  *
@@ -28,6 +28,22 @@ export function App() {
         switch(request.command) {
             case Command.Prompt:
                 showReportModal(request.body as PromptRequest);
+                break;
+            case Command.PromptPage:
+                const profileId = profileIdFromPage();
+                if(profileId) {
+                    showReportModal({
+                        profileId: profileId,
+                        // TODO: hack, getReportStats, getReports?
+                        upVotes: 0,
+                        downVotes: 0,
+                        avgConfidence: 0
+                    });
+                }
+                else {
+                    // TODO: "local" version of common.ts/notification/errorNotification() to abstract from mantine UI call
+                    notifications.show({ message: 'Unable to determine profile ID', color: 'red'});
+                }
                 break;
             case Command.Notification:
                 notifications.show(request.body as any);

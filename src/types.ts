@@ -45,9 +45,11 @@ export interface ReportStats {
 export enum Command {
     // background->extension
     Prompt = "PROMPT",
+    PromptPage = "PROMPT_PAGE",
     Notification = "NOTIFICATION",
     SignInRequired = "SIGN_IN_REQUIRED",
     Detection = "DETECTION",
+    // TODO: rename?
     UpdateProfile = "UPDATE_PROFILE",
     // extension->background
     Report = "REPORT",

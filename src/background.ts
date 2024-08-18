@@ -79,6 +79,18 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
             'https://www.facebook.com/*'
         ]
     });
+
+    chrome.contextMenus.create({
+        title: 'Report',
+        contexts: ['page'],
+        id: 'report_page',
+        documentUrlPatterns: [
+            'https://www.facebook.com/profile.php?id=*',
+            // TODO: figure out a pattern to identify aliases profile links
+            //'https://www.facebook.com/*/$',
+            'https://www.facebook.com/*'
+        ]
+    });
 });
 
 (async function () {
@@ -187,11 +199,12 @@ chrome.runtime.onInstalled.addListener(function (details: chrome.runtime.Install
                             reports: (await supabase.getReports(profileId!))
                         };
 
-                        chrome.tabs.sendMessage(tab.id!, {
-                            command: Command.Prompt,
-                            body: response
-                        });
+                        sendMessageToActiveTab(Command.Prompt, response, tab);
                     })();
+                    break;
+                // TODO: auth guard
+                case 'report_page':
+                    sendMessageToActiveTab(Command.PromptPage, null, tab);
                     break;
                 case 'watch':
                     supabase.watch(profileId!);
