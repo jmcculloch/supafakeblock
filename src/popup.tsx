@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from "react-dom/client";
-import { MantineProvider, Text, Card, Button, Image, Group, Center, Space, NumberFormatter } from '@mantine/core';
+import { MantineProvider, Text, Card, Button, Image, Group, Center, Space } from '@mantine/core';
 import { Supabase } from './supabase';
 import { emojiForReportType, sendMessageToActiveTab, sendMessageToBackground, theme } from './common';
 import { Command, ReportType } from './types';
 import { User } from '@supabase/supabase-js';
 
 import '@mantine/core/styles.css';
-import { AnyMxRecord } from 'dns';
 
 interface PopupProps {
     blacklistCount: number
@@ -41,7 +40,7 @@ function Popup(props: PopupProps) {
 
             <Card.Section withBorder>
                 <Text>{props.user?.user_metadata?.name}</Text>
-                <Text>Blacklist Size <NumberFormatter value={props.blacklistCount} thousandSeparator /></Text>
+                <Text>Blacklist Size {props.blacklistCount.toLocaleString()}</Text>
             </Card.Section>
 
             <Card.Section withBorder>
