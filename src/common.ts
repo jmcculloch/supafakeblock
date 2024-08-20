@@ -43,13 +43,11 @@ export function profileIdFromUrl(url: string): number | null {
 export function profileIdFromPage(): number | null {
     const fromLocationHref = window.location.href.match(PROFILE_LINK_REGEX);
     if(fromLocationHref) {
-        console.log(`from window.location.href: `, fromLocationHref[1]);
         return parseInt(fromLocationHref[1]);
     }
 
     const fromPhotos = (document.querySelector('a[href^="/photo/?fbid="]') as HTMLAnchorElement)?.href.match(PROFILE_ID_FROM_PHOTO_REGEX);
     if(fromPhotos) {
-        console.log(`from photo: `, fromPhotos[1]);
         return parseInt(fromPhotos[1]);
     }
 
