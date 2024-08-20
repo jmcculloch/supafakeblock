@@ -2,7 +2,7 @@
 
 ![build](https://github.com/jmcculloch/supafakeblock/workflows/build/badge.svg)
 
-Supafakeblock is composed of a distributed blacklist and a browser extension that augments Facebook group content.
+Supafakeblock is composed of a distributed blacklist and a browser extension that allows crowdsourced fraudulent profile reports and augments Facebook group content.
 
 A blacklist of malicious accounts is stored on [Supabase](https://supabase.com/) using [rxdb-supabase](https://github.com/marceljuenemann/rxdb-supabase). A local copy of the blacklist is synchronized at extension intialization. Profiles are queried against this local copy and are not remote network calls.
 
@@ -12,7 +12,7 @@ The browser extension will montitor Facebook group content and highlights blackl
 * Any group content in your personal feed
 
 ### Installation
-To install a pre-build extension please see https://github.com/jmcculloch/supafakeblock/wiki/Install
+To install a pre-built extension please see https://github.com/jmcculloch/supafakeblock/wiki/Install
 
 ## Building
 ### Requirements
