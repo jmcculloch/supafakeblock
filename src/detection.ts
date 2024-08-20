@@ -15,6 +15,16 @@ export function detection() {
     engagement();
 }
 
+enum DetectionTypes {
+    ClonedNickname,
+    Pronoun,
+    AngryReactions,
+    BackdatedPosts,
+    BlacklistedEngagement,
+    SelfEngagement,
+    MissingEngagement
+}
+
 function checkForClonedNickname(): void {
     if(window.location.href.match(CLONED_NICKNAME_REGEX)) {
         showNotification({
@@ -69,66 +79,66 @@ function checkForBackdatedPosts(): void {
 function engagement(): void {
     const profileName = getProfileName();
 
+    const engagementRules = new Set();
     const reactionSet = new Set();
 
-    let selfReaction = false;
-    let blacklistedReaction = false;
+    const observer = new MutationObserver((mutationList, observer) => {
+        console.log(`within MutationObserver`);
 
-    Array.from(document.querySelectorAll('div[data-visualcompletion="ignore-dynamic"] span[aria-label="See who reacted to this"]')).some((e: Element) => {
-
-        if(selfReaction) {
-            return true;
+        const reactions = document.querySelectorAll('div[data-visualcompletion="ignore-dynamic"] span[dir="auto"] a[role="link"]');
+        console.log(`MO reactions: `, reactions);
+        if(reactions.length == 0) {
+            return;
         }
+
+        // Try to find the engagement count. This is repeated in multiple elemenets (screenreader?) so attempt to parse out last numerical value 
+        // const expectedCountMatch = reactionButton.textContent.match(/\s(\d+)$/);
+        // if(expectedCountMatch) {
+        //     console.log(`expectedCountMatch: `, reactions.length, expectedCountMatch[1]);
+        //     if(reactions.length != expectedCountMatch[1]) {
+        //         engagementRules.add(DetectionTypes.MissingEngagement);
+        //     }
+        // }
+
+        reactions.forEach((e) => {
+            reactionSet.add(e.textContent);
+
+            const profileLink = e as HTMLAnchorElement;
+
+            const profileId = profileIdFromUrl(profileLink.href);
+            if(profileId) {
+                isBlacklisted(profileId, profileLink, () => {
+                    engagementRules.add(DetectionTypes.BlacklistedEngagement);
+                });
+            }
+        });
+
+        if(reactionSet.has(profileName)) {
+            engagementRules.add(DetectionTypes.SelfEngagement);
+        }
+    });
+
+    // Get a list of post reaction links
+    Array.from(document.querySelectorAll('div[data-visualcompletion="ignore-dynamic"] span[aria-label="See who reacted to this"]')).some((e: Element) => {
+        console.log(`See who reacted to this loop: `, e);
+
+         // @ts-ignore
+         const reactionButton = e.nextSibling?.querySelector('div[role="button"]');
+         if(reactionButton) {
+             reactionButton.click();
+         }
+
+        // TODO: is there a more precise node to monitor Facebook/React? DOM manipulation?
+        observer.observe(document.body, { attributes: false, childList: true, subtree: true });
+
+        observer.disconnect();
 
         // @ts-ignore
-        const reactionButton = e.nextSibling?.querySelector('div[role="button"]');
-
-        if(reactionButton) {
-            reactionButton.click();
-        }
-
-        // TODO: This needs to be ported to a mutation observer and get rid of setTimeout
-        setTimeout(() => {
-            const reactions = document.querySelectorAll('div[data-visualcompletion="ignore-dynamic"] span[dir="auto"] a[role="link"]');
-            reactions.forEach((e) => {
-                reactionSet.add(e.textContent);
-
-                if(blacklistedReaction) {
-                    return;
-                }
-
-                const profileLink = e as HTMLAnchorElement;
-
-                const profileId = profileIdFromUrl(profileLink.href);
-                if(profileId) {
-                    isBlacklisted(profileId, profileLink, () => {
-                        showNotification({
-                            title: 'Blacklisted Engagement',
-                            message: '🤬 Blacklisted Profile Engagement Detected',
-                            color: 'red'
-                        });
-
-                        blacklistedReaction = true;
-                    });
-                }
-            });
-
-            // @ts-ignore
-            const close = document.querySelector('div[aria-label="Close"]')?.click();
-
-            if(reactionSet.has(profileName)) {
-                if(!selfReaction) {
-                    showNotification({
-                        title: 'Self Engagement',
-                        message: '🤡 Self Engagement Detected',
-                        color: 'red'
-                    });
-                }
-
-                selfReaction = true;
-            }
-        }, 500);
+        const close = document.querySelector('div[aria-label="Close"]')?.click();
     });
+
+    console.log(`after engagement loop, engagementRules: `, engagementRules);
+    
 }
 
 function getProfileName(): string {
