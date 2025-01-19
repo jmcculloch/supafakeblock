@@ -46,10 +46,12 @@ function Popup(props: PopupProps) {
             <Card.Section withBorder>
                 <Space />
                 <Group justify="space-between">
+                    {/*
                     <Button variant="outline" fullWidth onClick={deleteBlacklist}>Delete Blacklist</Button>
                     <Button variant="outline" fullWidth onClick={() => sendMessageToActiveTab(Command.Detection)}>Detection</Button>
                     <Button disabled={props.user !== null} variant="outline" fullWidth onClick={signin}>Sign In</Button>
                     <Button disabled={props.user == null} variant="outline" fullWidth onClick={signout}>Sign Out</Button>
+                    */}
                 </Group>
             </Card.Section>
 
