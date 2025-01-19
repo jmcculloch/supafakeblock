@@ -8,11 +8,16 @@ export const theme = createTheme({
     primaryColor: 'red'
 });
 
+// TODO: need the leading .* in the regexes below?
+
 const GROUP_PROFILE_LINK_REGEX = /.*\/groups\/\d+\/user\/(\d+)\//;
 // NOTE: Adding a '$' to the end of the regex will limit to profileId=12345 and ignore links
 // with additional search params this cuts down on links to navigate a profile page but also
 // prevents links from popup cards, etc
 const PROFILE_LINK_REGEX = /.*\/profile.php\?id=(\d+)/;
+
+// Some pages or "digital profiles" will link using just the numeric ID
+const PAGE_PROFILE_REGEX = /\/(\d+)$/;
 
 const PROFILE_ID_FROM_PHOTO_REGEX = /.*set=\D+(\d+)/;
 
@@ -22,7 +27,7 @@ const PROFILE_ID_FROM_PHOTO_REGEX = /.*set=\D+(\d+)/;
  * @returns number
  */
 export function profileIdFromUrl(url: string): number | null {
-    const regexes = [GROUP_PROFILE_LINK_REGEX, PROFILE_LINK_REGEX];
+    const regexes = [GROUP_PROFILE_LINK_REGEX, PROFILE_LINK_REGEX, PAGE_PROFILE_REGEX];
     for(let regexIndex in regexes) {
         let regex = regexes[regexIndex];
 
@@ -69,7 +74,8 @@ export function queryProfileLinks(callback: (e: HTMLAnchorElement) => void, prof
     // TODO: exclude when aria-hidden=true (but allow when aria-hidden is not specified)
     [
         `a[href^="/groups/"][href*="/user/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`,
-        `a[href*="profile.php?id=${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`
+        `a[href*="profile.php?id=${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`,
+        `a[href*="/${profileId ?? ''}"]${profileId?'':':not(.sfb_evaluated)'}`
     ].forEach((querySelector) => {
         const matches = document.querySelectorAll(querySelector);
         matches.forEach((e: Element) => {
@@ -136,12 +142,12 @@ export function blacklistProfileLink(profileLink: HTMLAnchorElement, reportStats
     );
 
     if(reportStats.type != ReportType.WATCH) {
-        profileLink.classList.add('sfb_blacklisted', `sfb_blacklisted_${confidenceToString(reportStats.avgConfidence)}`);
+        profileLink.classList.add(`sfb_blacklisted_${confidenceToString(reportStats.avgConfidence)}`);
     }
 }
 
 export function clearProfileLink(profileLink: HTMLAnchorElement) {
-    profileLink.classList.remove('sfb_blacklisted', 'sfb_SCAMMER', 'sfb_SPAMMER', 'sfb_FAKE_PROFILE', 'sfb_WATCH');
+    profileLink.classList.remove('sfb_SCAMMER', 'sfb_SPAMMER', 'sfb_FAKE_PROFILE', 'sfb_WATCH');
 }
 
 export function emojiForReportType(type: ReportType | string): string {
