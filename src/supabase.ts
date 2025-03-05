@@ -33,17 +33,19 @@ export class Supabase {
     public supabaseClient: SupabaseClient;
     private reportStatsCache = new TTLCache({ttl: 15*60*1000});
     private reportsCache = new TTLCache({ttl: 15*60*1000});
+    private static supabaseReplication: SupabaseReplication;
 
     constructor() {
         this.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
+    // TODO: refactor Singleton, initialization/static members i.e. supabaseReplication
     public static async init(): Promise<Supabase> {
-        if(this.instance != null) {
+        if(Supabase.instance != null) {
             return this.instance;
         }
 
-        this.instance = new Supabase();
+        Supabase.instance = new Supabase();
         const db = await createRxDatabase({
             name: 'blacklist',
             storage: getRxStorageDexie()
@@ -55,7 +57,7 @@ export class Supabase {
             }
         });
 
-        const replication = new SupabaseReplication({
+        Supabase.supabaseReplication = new SupabaseReplication({
             supabaseClient: this.instance.supabaseClient,
             collection: this.instance.myCollection.blacklist,
             replicationIdentifier: "myId" + SUPABASE_URL,
@@ -72,6 +74,10 @@ export class Supabase {
     }
 
     public async isBlacklisted(profileId: number): Promise<ReportStats | null> {
+        // Make sure initial replication is complete.
+        // This should prevent false negatives before replication completes
+        await Supabase.supabaseReplication.awaitInitialReplication();
+
         // Query local blacklist table
         const result = await this.myCollection.blacklist.findOne({
             selector: {
@@ -84,7 +90,6 @@ export class Supabase {
             return null;
         }
 
-        // TODO: cache?
         const stats = await this.getReportStats(profileId);
 
         // TODO: avgConfidence?, string/number?
